@@ -163,7 +163,7 @@ def main():
     screen = pygame.display.set_mode((540, 590))
     screen.fill((255, 255, 255))
     pygame.display.set_caption("Sudoku")
-    icon = pygame.image.load("icon.png")
+    icon = pygame.image.load("Sudoku-GUI-master/icon.png")
     pygame.display.set_icon(icon)
 
     #loading screen when generating grid
