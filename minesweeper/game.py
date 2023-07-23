@@ -106,8 +106,8 @@ class MineSweeperGame:
 
 
   def runAgent(self):
-    agent = SearchAgent("testSearch", "MineSweeperProblem")
-    agent.registerInitialState(1)
+    agent = SearchAgent("simpleDepthFirstSearch", "MineSweeperProblem")
+    agent.registerInitialState(self)
 
     for action in agent.getAction(1):
       self.reveal_cell(action.x, action.y)
