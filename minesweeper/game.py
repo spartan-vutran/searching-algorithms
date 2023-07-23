@@ -68,7 +68,7 @@ class MineSweeperGame:
         self.buttons[row][col].config(text=' ', state=tk.DISABLED, relief=tk.SUNKEN, bg="red")
         for i in range(-1, 2):
             for j in range(-1, 2):
-                if 0 <= row + i < rows and 0 <= col + j < cols and self.buttons[row + i][col + j]['state'] == tk.NORMAL:
+                if 0 <= row + i < self.rows and 0 <= col + j < self.cols and self.buttons[row + i][col + j]['state'] == tk.NORMAL:
                     self.reveal_cell(row + i, col + j)
     else:
         self.buttons[row][col].config(text=str(cell_value), state=tk.DISABLED, relief=tk.SUNKEN, bg="red")
@@ -80,8 +80,8 @@ class MineSweeperGame:
        
 
   def replay(self):
-    for i in range(rows):
-      for j in range(cols):
+    for i in range(self.rows):
+      for j in range(self.cols):
           self.board[i][j] = 0
           self.buttons[i][j].config(text='', state=tk.NORMAL, relief=tk.RAISED, bg="#dddddd")
     self.replay_button.config(image=self.playing_icon)
@@ -94,8 +94,8 @@ class MineSweeperGame:
     root.title('Minesweeper')
 
     # Frame
-    for i in range(rows):
-      for j in range(cols):
+    for i in range(self.rows):
+      for j in range(self.cols):
         button = tk.Button(root, width=3, height=1, command=lambda row=i, col=j: self.reveal_cell(row, col), bg="#dddddd")
         button.grid(row=i, column=j)
         self.buttons[i][j] = button
@@ -145,9 +145,9 @@ class MineSweeperGame:
 #   display_thread.start()
 
 if __name__ == '__main__':
-  rows = 7
-  cols = 7
-  num_mines = 8
+  rows = 10
+  cols = 10
+  num_mines = 12
   # board = [
   #   [-1,-1,-1,3,1,2,-1],
   #   [2,4,-1,3,-1,2,1],
@@ -159,13 +159,17 @@ if __name__ == '__main__':
   # ]
 
   board = [
-    [2,-1,3,1,1,1,1],
-    [2,-1,4,-1,1,1,-1],
-    [1,3,-1,3,1,1,1],
-    [0,2,-1,4,2,1,0],
-    [0,1,2,-1,-1,1,0],
-    [0,0,1,2,2,1,0],
-    [0,0,0,0,0,0,0],
+        [0,0,0,0,0,1,1,1,0,0,],
+        [0,0,0,0,0,1,-1,1,0,0,],
+        [0,0,1,2,2,2,1,1,0,0,],
+        [0,1,2,-1,-1,1,0,0,0,0,],
+        [0,1,-1,4,3,2,0,0,1,1,],
+        [1,2,2,2,-1,1,0,0,1,-1,],
+        [1,-1,1,2,2,2,0,0,1,1,],
+        [1,1,2,2,-1,1,1,1,1,0,],
+        [1,1,1,-1,2,1,2,-1,2,0,],
+        [-1,1,1,1,1,0,2,-1,2,0,],
   ]
+  # game = MineSweeperGame(rows, cols, num_mines)
   game = MineSweeperGame(rows, cols, num_mines, board)
   game.run_game()

@@ -102,8 +102,8 @@ def aStarSearch(problem, heuristic=nullHeuristic):
           print(f"Cost F: {full_cost + heuristic_cost}.  G(s)={full_cost}. H(s)={heuristic_cost} ")
           print("\n")
           printArrayInt(problem.board)
-          
-          fringe.push((child_node, full_path, full_cost), full_cost + heuristic_cost)    # Pushing (Node, [Path], Culmulative backward cost) to the fringe.
+          # TODO: Find a more efficient search, because update function would make the code to be O(n^2)
+          fringe.update((child_node, full_path, full_cost), full_cost + heuristic_cost)    # Pushing (Node, [Path], Culmulative backward cost) to the fringe.
       else:
         print("==========Explored node=============")
         printArray(node, problem)

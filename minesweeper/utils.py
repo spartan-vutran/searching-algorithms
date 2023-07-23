@@ -59,13 +59,15 @@ class PriorityQueue:
       # If item already in priority queue with higher priority, update its priority and rebuild the heap.
       # If item already in priority queue with equal or lower priority, do nothing.
       # If item not in priority queue, do the same thing as self.push.
+      flag = False
       for index, (p, c, i) in enumerate(self.heap):
-        if i == item:
+        if i[0] == item[0]: #Compare object
+          flag = True
           if p <= priority:
               break
           del self.heap[index]
           self.heap.append((priority, c, item))
           heapq.heapify(self.heap)
           break
-      else:
+      if not flag:
         self.push(item, priority)
