@@ -27,6 +27,8 @@ from tkinter import ttk
 from tkinter import messagebox
 from tkinter import simpledialog
 from tkinter import filedialog, scrolledtext
+from game import MineSweeperGame
+from searchAgent import SearchAgent
 
 import psutil
 
@@ -72,6 +74,12 @@ OUTPUT_EDITABLE = False
 # Indicates whether timer thread should clear status bar or not (It's useful when some problems happened)
 timer_clear_status_bar = False
 
+#set default maxtrix
+ROWS_MATRIX_DEFAULT = 5
+COLUMN_MATRIX_DEFAULT = 5
+NUM_OF_MINES = 2
+minesweepergame = MineSweeperGame(ROWS_MATRIX_DEFAULT, ROWS_MATRIX_DEFAULT, NUM_OF_MINES)
+
 # Main window
 main_window = tkinter.Tk()
 main_window.title("pynpuzzle - Solve n-puzzle with Python")
@@ -98,7 +106,7 @@ def return_false_validate():
     return OUTPUT_EDITABLE
 
 
-def draw_puzzle(puzzle_frame, n, read_only=False):
+def draw_puzzle(puzzle_frame, numOfRows, numOfColumns, read_only=False):
     """
     Fills a frame widget with n + 1 entry widget.
 
@@ -106,10 +114,10 @@ def draw_puzzle(puzzle_frame, n, read_only=False):
     n : Puzzle type (n-puzzle).
     read_only : Should widgets be read-only or not
     """
-    n = int(math.sqrt(n + 1))
+    # n = int(math.sqrt(n + 1))
 
-    for i in range(n):
-        for j in range(n):
+    for i in range(numOfRows):
+        for j in range(numOfColumns):
             entry = tkinter.Entry(puzzle_frame, width=4, justify='center')
             entry.grid(row=i, column=j, sticky='WENS')
 
@@ -118,8 +126,8 @@ def draw_puzzle(puzzle_frame, n, read_only=False):
                 #   OUTPUT_EDITABLE global variable.
                 entry.config(validatecommand=return_false_validate, validate=tkinter.ALL)
 
-        puzzle_frame.grid_columnconfigure(i, weight=1)
-        puzzle_frame.grid_rowconfigure(i, weight=1)
+        # puzzle_frame.grid_columnconfigure(i, weight=1)
+        # puzzle_frame.grid_rowconfigure(i, weight=1)
 
 
 def config_frame_state(frame, state):
@@ -159,7 +167,7 @@ def config_io_frame_state(frame, state):
         config_frame_state(input_action_frame, state)
 
 
-def create_puzzle_frame(parent_frame, n, current_puzzle_frame=None, read_only=False):
+def create_puzzle_frame(parent_frame, numOfRows, numOfColumns, current_puzzle_frame=None, read_only=False):
     """
     Creates a new puzzle frame inside a parent frame and if the puzzle frame already exists, first destroys it.
     This is done because when the n changes we have to change the puzzle frame's grid row and column configurations
@@ -173,7 +181,7 @@ def create_puzzle_frame(parent_frame, n, current_puzzle_frame=None, read_only=Fa
     puzzle_frame = tkinter.Frame(parent_frame)
     puzzle_frame.grid(row=0, column=0, sticky='WENS')
 
-    draw_puzzle(puzzle_frame, n, read_only)
+    draw_puzzle(puzzle_frame, numOfRows, numOfColumns, read_only)
 
     return puzzle_frame
 
@@ -183,10 +191,11 @@ def fill_puzzle_frame(puzzle_frame, lst):
     Fills a puzzle frame with a puzzle list.
     """
     global OUTPUT_EDITABLE
-
-    lst = lst[:]
-    lst = ['' if x == 0 else x for x in lst]
-
+    lst = []
+    # lst = ['' if x == 0 else x for x in lst]
+    for row in range(minesweepergame.rows):
+        for col in range(minesweepergame.cols):
+            lst.append(minesweepergame.board[row][col])
     # Enable editing the output puzzle temporarily
     OUTPUT_EDITABLE = True
     i = 0
@@ -194,7 +203,7 @@ def fill_puzzle_frame(puzzle_frame, lst):
         child.delete(0, tkinter.END)
         child.insert(0, lst[i])
 
-        if puzzle_frame is output_puzzle_frame and lst[i] == '':
+        if puzzle_frame is output_puzzle_frame and lst[i][i] == 0:
             child['highlightbackground'] = 'Orange'
         elif puzzle_frame is output_puzzle_frame:
             # Change the child's highlightbackground color to entry widget's default property using another
@@ -330,7 +339,8 @@ def load_output_step(n):
     global OUTPUT_STEP
 
     OUTPUT_STEP = n
-    step_n_lst = OUTPUT_LST[n]
+    # step_n_lst = OUTPUT_LST[n]
+    step_n_lst = minesweepergame.board
     fill_puzzle_frame(output_puzzle_frame, step_n_lst)
 
     output_step_text.delete(0, tkinter.END)
@@ -350,47 +360,52 @@ def piper():
     try:
         # Waits for algorithm to send the result
         OUTPUT_LST = output_pipe.recv()
+        print(len(OUTPUT_LST))
+        print(OUTPUT_LST)
+        count = 1
+        for action in OUTPUT_LST:
+            print(f"Action{count}: {action.x}, {action.y}")
 
         output_error = False
         output_exception = False
 
-        # If the returned value is a string, Some exception has have happened
-        if type(OUTPUT_LST) is str:
-            output_exception = True
-        else:
-            # Validate algorithm's output
-            if not OUTPUT_LST:
-                output_error = True
-            elif type(OUTPUT_LST) is not list:
-                output_error = True
-            else:
-                try:
-                    n = int(n_spinbox.get())
-                    sqrt_n = math.sqrt(n + 1)
-                    for output_step in OUTPUT_LST:
-                        if type(output_step) is not list:
-                            raise BaseException()
-                        if len(output_step) != sqrt_n:
-                            raise BaseException()
-                        for step_row in output_step:
-                            if type(step_row) is not list:
-                                raise BaseException()
-                            if len(step_row) != sqrt_n:
-                                raise BaseException()
-                        if not check_puzzle_list([int(output_step[i][j])
-                                                  for i in range(len(output_step))
-                                                  for j in range(len(output_step))],
-                                                 n):
-                            raise BaseException()
-                except:
-                    output_error = True
+        # # If the returned value is a string, Some exception has have happened
+        # if type(OUTPUT_LST) is str:
+        #     output_exception = True
+        # else:
+        #     # Validate algorithm's output
+        #     if not OUTPUT_LST:
+        #         output_error = True
+        #     elif type(OUTPUT_LST) is not list:
+        #         output_error = True
+        #     else:
+        #         try:
+        #             n = 6
+        #             sqrt_n = math.sqrt(n + 1)
+        #             for output_step in OUTPUT_LST:
+        #                 if type(output_step) is not list:
+        #                     raise BaseException()
+        #                 if len(output_step) != sqrt_n:
+        #                     raise BaseException()
+        #                 for step_row in output_step:
+        #                     if type(step_row) is not list:
+        #                         raise BaseException()
+        #                     if len(step_row) != sqrt_n:
+        #                         raise BaseException()
+        #                 if not check_puzzle_list([int(output_step[i][j])
+        #                                           for i in range(len(output_step))
+        #                                           for j in range(len(output_step))],
+        #                                          n):
+        #                     raise BaseException()
+        #         except:
+        #             output_error = True
 
-            if not output_error:
-                # Converts output's puzzles to one dimensional representation of them
-                tmp_lst = []
-                for result in OUTPUT_LST:
-                    tmp_lst.append(puzzle_to_list(result))
-                OUTPUT_LST = tmp_lst
+        #     if not output_error:
+        #         # Converts output's puzzles to one dimensional representation of them
+        #         tmp_lst = []
+        #         for result in OUTPUT_LST:
+        #             tmp_lst.append(puzzle_to_list(result))
+        #         OUTPUT_LST = tmp_lst
 
     except EOFError:
         # Stop button pressed
@@ -406,30 +421,30 @@ def piper():
         calculation_stop()
 
         # If some exception has have happened inside algorithm's function
-        if output_exception:
-            messagebox.showerror("Algorithm exception", "Some exception happened in algorithm's source code:\n\n" +
-                                 OUTPUT_LST, parent=main_window)
+        # if output_exception:
+        #     messagebox.showerror("Algorithm exception", "Some exception happened in algorithm's source code:\n\n" +
+        #                          OUTPUT_LST, parent=main_window)
 
-            OUTPUT_LST = []
-            OUTPUT_STEP = 0
+        #     OUTPUT_LST = []
+        #     OUTPUT_STEP = 0
 
-            return
+        #     return
 
-        if output_error:
-            messagebox.showerror("Algorithm output error", "Algorithm's output is not valid.", parent=main_window)
+        # if output_error:
+        #     messagebox.showerror("Algorithm output error", "Algorithm's output is not valid.", parent=main_window)
 
-            OUTPUT_LST = []
-            OUTPUT_STEP = 0
+        #     OUTPUT_LST = []
+        #     OUTPUT_STEP = 0
 
-            return
+        #     return
 
-        # Enable output's action frame
-        config_frame_state(output_action_frame, tkinter.NORMAL)
-        output_to_label['text'] = len(OUTPUT_LST) - 1
-        output_0_label['text'] = '0'
+        # # Enable output's action frame
+        # config_frame_state(output_action_frame, tkinter.NORMAL)
+        # output_to_label['text'] = len(OUTPUT_LST) - 1
+        # output_0_label['text'] = '0'
 
-        # Load the first step to output puzzle
-        load_output_step(0)
+        # # Load the first step to output puzzle
+        # load_output_step(0)
 
 
 def start_piping():
@@ -580,55 +595,6 @@ n_frame.grid_columnconfigure(1, weight=1)
 # n label
 tkinter.Label(n_frame, text="n: ").grid(row=0, column=0)
 
-
-def change_app_n(n):
-    """
-    Refreshes app based on new n.
-    """
-    global input_puzzle_frame
-    global output_puzzle_frame
-    global GOAL_STATE
-
-    # Recreate input puzzle
-    input_puzzle_frame = create_puzzle_frame(input_labelframe, n, input_puzzle_frame)
-    # Recreate output puzzle
-    output_puzzle_frame = create_puzzle_frame(output_labelframe, n, output_puzzle_frame, True)
-    config_io_frame_state(output_labelframe, tkinter.DISABLED)
-    # Regenerate goal state
-    GOAL_STATE = [i for i in range(n + 1)]
-    # Clear status bar
-    ram_var.set('')
-    max_ram_var.set('')
-    cpu_var.set('')
-
-
-# n spinbox
-def spinbox_command(action):
-    """
-    n input spinbox up and down handler.
-    """
-    value = int(math.sqrt(int(n_spinbox.get()) + 1))
-    # If up button clicked
-    if action == 'up':
-        value += 1
-    # If down button clicked
-    else:
-        if value == 3:
-            return
-        value -= 1
-
-    value = value * value - 1
-
-    n_spinbox.delete(0, tkinter.END)
-    n_spinbox.insert(0, value)
-
-    change_app_n(value)
-
-
-# n spinbox
-n_spinbox = tkinter.Spinbox(n_frame, command=(main_window.register(spinbox_command), '%d'))
-n_spinbox.insert(tkinter.INSERT, 8)
-n_spinbox.grid(row=0, column=1, sticky='EWN')
 # Algorithm frame
 algorithm_frame = tkinter.Frame(main_window)
 algorithm_frame.grid(row=0, column=1, sticky='EWN', padx=5, pady=5)
@@ -657,7 +623,7 @@ def calculation_stop():
     progress_bar.grid_remove()
     progress_bar.stop()
     stop_button['state'] = tkinter.DISABLED
-    n_spinbox['state'] = tkinter.NORMAL
+    # n_spinbox['state'] = tkinter.NORMAL
     # Enable input data entry
     config_io_frame_state(input_labelframe, tkinter.NORMAL)
 
@@ -698,20 +664,21 @@ def is_input_puzzle_valid(puzzle_frame):
     """
     try:
         lst = get_puzzle_frame_list(puzzle_frame)
-        if not check_puzzle_list(lst, int(n_spinbox.get())):
-            raise Exception
+        # if not check_puzzle_list(lst, int(n_spinbox.get())):
+        #     raise Exception
         return lst
     except:
         return None
 
 
-def search_runner(func, pipe, lst, goal_state):
+def search_runner(func, pipe, arg):
     """
     This function invokes the given func with lst and goal_state arguments and sends func's returned value to pipe.
     If some exception happened in func, sends print ready exception's string to show to user.
     """
     try:
-        ret_val = func(lst, goal_state)
+        # ret_val = func(lst, goal_state)
+        ret_val = func(arg)
         pipe.send(ret_val)
     except BaseException as e:
         exception_message = traceback.format_exception(type(e), e, e.__traceback__)
@@ -741,7 +708,7 @@ def start_button_cmd():
     progress_bar.grid()
     progress_bar.start()
     stop_button['state'] = tkinter.NORMAL
-    n_spinbox['state'] = tkinter.DISABLED
+    # n_spinbox['state'] = tkinter.DISABLED
     config_io_frame_state(input_labelframe, tkinter.DISABLED)
     output_to_label['text'] = ''
     output_0_label['text'] = ''
@@ -755,15 +722,14 @@ def start_button_cmd():
         child.delete(0, tkinter.END)
     OUTPUT_EDITABLE = False
     # Find the search function of the selected algorithm
-    for module in algorithms_modules:
-        if module.search.__doc__ == algorithm_name.get():
-            search_function = module.search
+    # for module in algorithms_modules:
+    #     if module.search.__doc__ == algorithm_name.get():
+    #         search_function = module.search
+    search_function = minesweepergame.runAgentWihtoutDisplay
     # Algorithm's search process
     search_process = multiprocessing.Process(target=search_runner,
                                              args=(search_function,
-                                                   start_piping(),
-                                                   list_to_puzzle(lst),
-                                                   list_to_puzzle(GOAL_STATE)))
+                                                   start_piping(), 1))
     search_process.daemon = True
     search_process.start()
     start_timer()
@@ -785,7 +751,7 @@ output_labelframe.grid(row=2, column=0, sticky='WENS', padx=5, pady=5)
 output_labelframe.grid_rowconfigure(0, weight=1)
 output_labelframe.grid_columnconfigure(0, weight=1)
 # Output puzzle frame
-output_puzzle_frame = create_puzzle_frame(output_labelframe, 8, None, True)
+output_puzzle_frame = create_puzzle_frame(output_labelframe, ROWS_MATRIX_DEFAULT, COLUMN_MATRIX_DEFAULT, None, True)
 # Output action frame
 output_action_frame = tkinter.Frame(output_labelframe, bd=1, relief=tkinter.SUNKEN)
 
@@ -937,15 +903,8 @@ input_labelframe.grid(row=2, column=1, sticky='WENS', padx=5, pady=5)
 input_labelframe.grid_rowconfigure(0, weight=1)
 input_labelframe.grid_columnconfigure(0, weight=1)
 
- # Input puzzle size
-input_puzzle_size = tkinter.Entry(input_labelframe, width=10)
-input_puzzle_size.grid(row=0, column=0, padx=5, pady=5)
-
-# Button to create the puzzle
-create_puzzle_button = tkinter.Button(input_labelframe, text="Create Puzzle", command=lambda: draw_puzzle(input_labelframe, int(input_puzzle_size.get())))
-create_puzzle_button.grid(row=0, column=1, padx=5, pady=5)
 # Input puzzle frame
-input_puzzle_frame = create_puzzle_frame(input_labelframe, 8)
+input_puzzle_frame = create_puzzle_frame(input_labelframe, ROWS_MATRIX_DEFAULT, COLUMN_MATRIX_DEFAULT)
 # Input action frame
 input_action_frame = tkinter.Frame(input_labelframe)
 input_action_frame.grid(row=1, column=0, sticky='WENS')
@@ -960,34 +919,34 @@ def random_button_command(puzzle_frame):
 
     See https://www.sitepoint.com/randomizing-sliding-puzzle-tiles/ for more information.
     """
-    n = int(n_spinbox.get())
-    lst = [i for i in range(0, n + 1)]
-    random.shuffle(lst)
+    # n = 6
+    # lst = [i for i in range(0, n + 1)]
+    # random.shuffle(lst)
 
-    sum_inversions = 0
-    for tile in [x for x in lst if x != 0]:
-        before_tiles = GOAL_STATE[:GOAL_STATE.index(tile)]
-        for after_tile in [x for x in lst[lst.index(tile):] if x != 0]:
-            if before_tiles.count(after_tile):
-                sum_inversions += 1
+    # sum_inversions = 0
+    # for tile in [x for x in lst if x != 0]:
+    #     before_tiles = GOAL_STATE[:GOAL_STATE.index(tile)]
+    #     for after_tile in [x for x in lst[lst.index(tile):] if x != 0]:
+    #         if before_tiles.count(after_tile):
+    #             sum_inversions += 1
 
-    sqrt_n = math.sqrt(n + 1)
+    # sqrt_n = math.sqrt(n + 1)
 
-    def row_number(i):
-        return math.ceil((i + 1) / sqrt_n)
+    # def row_number(i):
+    #     return math.ceil((i + 1) / sqrt_n)
 
-    if sqrt_n % 2 == 1:
-        solvable = sum_inversions % 2 == 0
-    else:
-        solvable = (sum_inversions + abs(row_number(lst.index(0)) - row_number(GOAL_STATE.index(0)))) % 2 == 0
+    # if sqrt_n % 2 == 1:
+    #     solvable = sum_inversions % 2 == 0
+    # else:
+    #     solvable = (sum_inversions + abs(row_number(lst.index(0)) - row_number(GOAL_STATE.index(0)))) % 2 == 0
 
-    if not solvable:
-        if lst[0] != 0 and lst[1] != 0:
-            lst[0], lst[1] = lst[1], lst[0]
-        else:
-            lst[len(lst) - 1], lst[len(lst) - 2] = lst[len(lst) - 2], lst[len(lst) - 1]
+    # if not solvable:
+    #     if lst[0] != 0 and lst[1] != 0:
+    #         lst[0], lst[1] = lst[1], lst[0]
+    #     else:
+    #         lst[len(lst) - 1], lst[len(lst) - 2] = lst[len(lst) - 2], lst[len(lst) - 1]
 
-    fill_puzzle_frame(puzzle_frame, lst)
+    fill_puzzle_frame(puzzle_frame, minesweepergame.board)
 
 
 # Input's random button widget
