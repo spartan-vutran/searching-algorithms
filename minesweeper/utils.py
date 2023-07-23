@@ -11,6 +11,10 @@ def resize_icon_image(image_path, width, height):
     return ImageTk.PhotoImage(resized_image)
 
 
+def nullHeuristic(state, problem=None):
+  return 0
+
+
 class Stack:
     "A container with a last-in-first-out (LIFO) queuing policy."
     def __init__(self):

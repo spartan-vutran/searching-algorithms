@@ -5,13 +5,25 @@ from searchAgent import SearchAgent
 
 
 class MineSweeperGame:
-  def __init__(self, rows, cols, num_mines):
-    self.rows = rows
-    self.cols = cols
-    self.num_mines = num_mines
+  def __init__(self, rows, cols, num_mines, board = None):
+    if board == None:
+      self.rows = rows
+      self.cols = cols
+      self.num_mines = num_mines
+      self.board = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
+      self.initBoard()
+    else:
+      self.board = board
+      self.rows = len(self.board)
+      self.cols = len(self.board[0])
+      self.num_mines = 0 
+      # TODO: Check for valid board
+      for i in range(self.rows):
+        for j in range(self.cols):
+          if self.board[i][j] == -1:
+            self.num_mines +=1
+      
     self.buttons = [[None for _ in range(self.cols)] for _ in range(self.rows)]
-    self.board = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
-    self.initBoard()
     self.leftCount = self.rows*self.cols
 
 
@@ -106,7 +118,9 @@ class MineSweeperGame:
 
 
   def runAgent(self):
-    agent = SearchAgent("depthFirstSearch", "MineSweeperProblem")
+    # aStarSearch
+    # agent = SearchAgent("depthFirstSearch", "MineSweeperProblem")
+    agent = SearchAgent("aStarSearch", "MineSweeperProblem", "MineSweeperHeuristic")
     agent.registerInitialState(self)
 
     count = 1
@@ -131,9 +145,27 @@ class MineSweeperGame:
 #   display_thread.start()
 
 if __name__ == '__main__':
-  rows = 5
-  cols = 5
-  num_mines = 4
+  rows = 7
+  cols = 7
+  num_mines = 8
+  # board = [
+  #   [-1,-1,-1,3,1,2,-1],
+  #   [2,4,-1,3,-1,2,1],
+  #   [0,1,2,3,2,1,0],
+  #   [0,0,1,-1,1,0,0],
+  #   [0,0,1,1,2,1,1],
+  #   [0,0,0,0,1,-1,1],
+  #   [0,0,0,0,1,1,1],
+  # ]
 
-  game = MineSweeperGame(rows, cols, num_mines)
+  board = [
+    [2,-1,3,1,1,1,1],
+    [2,-1,4,-1,1,1,-1],
+    [1,3,-1,3,1,1,1],
+    [0,2,-1,4,2,1,0],
+    [0,1,2,-1,-1,1,0],
+    [0,0,1,2,2,1,0],
+    [0,0,0,0,0,0,0],
+  ]
+  game = MineSweeperGame(rows, cols, num_mines, board)
   game.run_game()
