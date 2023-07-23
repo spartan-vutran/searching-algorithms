@@ -84,6 +84,15 @@ class MineSweeperState():
     else:
         raise TypeError("Invalid index format. Use (row, col)")
 
+  def __eq__(self, other):
+    if isinstance(other, MineSweeperState):
+      return self.board == other.board
+    return False
+
+  def __hash__(self):
+    # Ensure that instances of MyClass are hashable based on their value attribute
+    return hash(self.board.tobytes())
+
 
 class MineSweeperProblem(SearchProblem):
     """
@@ -111,7 +120,7 @@ class MineSweeperProblem(SearchProblem):
       start_pos = 0
       self.start_row = 0
       self.start_col =0
-      while(self.board[self.start_col][self.start_row]==-1):
+      while(self.board[self.start_row][self.start_col]==-1):
         start_pos +=1
         self.start_row = start_pos//self.cols 
         self.start_col = start_pos%self.cols 
@@ -143,7 +152,7 @@ class MineSweeperProblem(SearchProblem):
 
         Returns True if and only if the state is a valid goal state.
         """
-        return state.board == self.goal_state.board
+        return state == self.goal_state
         # util.raiseNotDefined()
     
 
@@ -199,3 +208,23 @@ class MineSweeperProblem(SearchProblem):
         The sequence must be composed of legal moves.
         """
         return len(actions)
+    
+
+# Calculate the number of cells aside bomb cells
+def MineSweeperHeuristic(state: MineSweeperState, problem: MineSweeperProblem):
+  cell_aside_bomb_count = set()
+  # TODO: This algo is O(n^2), fix it if you have time
+  for i in range(problem.rows):
+    for j in range(problem.cols):
+      if problem.board[i][j] == -1:
+        for m in [i-1, i, i+1]:
+          if m<0 or m >= problem.rows:
+            continue
+          for k in [j-1, j, j+1]:
+            if (k<0 or k >= problem.cols) or (i==m and k==j):
+              continue
+            if state[m, k] == 0 and problem.board[m][k] != -1: 
+              cell_aside_bomb_count.add((m,k))
+  
+  return len(cell_aside_bomb_count)
+     

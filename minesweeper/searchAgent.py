@@ -1,7 +1,7 @@
 import search
-import heuristic as heuristicMod
 import problem
 import time
+import utils
 
 class Agent:
     """
@@ -43,9 +43,12 @@ class SearchAgent(Agent):
       print('[SearchAgent] using function '+fn)
       self.searchFunction = func
     else:
-      if heuristic in dir(heuristicMod):
-        heur = getattr(heuristicMod, heuristic)
-      else:
+      heur = None
+      for mod in [utils, problem]:
+        if heuristic in dir(mod):
+          heur = getattr(mod, heuristic)
+          break
+      if heur == None:
         raise (AttributeError, heuristic + ' is not a function in searchAgents.py or search.py.')
       print('[SearchAgent] using function %s and heuristic %s' % (fn, heuristic))
       # Note: this bit of Python trickery combines the search algorithm and the heuristic
