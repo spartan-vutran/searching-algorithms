@@ -186,7 +186,7 @@ def create_puzzle_frame(parent_frame, numOfRows, numOfColumns, current_puzzle_fr
     return puzzle_frame
 
 
-def fill_puzzle_frame(puzzle_frame, lst):
+def fill_puzzle_frame(puzzle_frame, lst, action = None):
     """
     Fills a puzzle frame with a puzzle list.
     """
@@ -211,6 +211,56 @@ def fill_puzzle_frame(puzzle_frame, lst):
             child['highlightbackground'] = output_step_text['highlightbackground']
 
         i += 1
+    
+    if action != None:
+        for row in range(len(minesweepergame.board)):
+            for col in range(len(minesweepergame.board[0])):
+                entry_widget = puzzle_frame.grid_slaves(row=row, column=col)[0]
+                entry_widget.delete(0, tkinter.END)
+                entry_widget.insert(0, minesweepergame.board[row][col])
+
+                if row == action.x and col == action.y:
+                    entry_widget['highlightbackground'] = 'Orange'
+                else:
+                    entry_widget['highlightbackground'] = puzzle_frame.cget('background')
+    # Disable editing the output puzzle
+    OUTPUT_EDITABLE = False
+
+def fill_puzzle_frame_step_n(puzzle_frame, action):
+    """
+    Fills a puzzle frame with a puzzle list.
+    """
+    global OUTPUT_EDITABLE
+    lst = []
+    # lst = ['' if x == 0 else x for x in lst]
+    for row in range(minesweepergame.rows):
+        for col in range(minesweepergame.cols):
+            lst.append(minesweepergame.board[row][col])
+    # Enable editing the output puzzle temporarily
+    OUTPUT_EDITABLE = True
+    # i = 0
+    # for child in puzzle_frame.winfo_children():
+    #     child.delete(0, tkinter.END)
+    #     child.insert(0, lst[i])
+
+    #     if puzzle_frame is output_puzzle_frame and lst[i] == 0:
+    #         child['highlightbackground'] = 'Orange'
+    #     elif puzzle_frame is output_puzzle_frame:
+    #         # Change the child's highlightbackground color to entry widget's default property using another
+    #         #   entry widget which we are sure has default property's value
+    #         child['highlightbackground'] = output_step_text['highlightbackground']
+
+    #     i += 1
+    for row in range(len(minesweepergame.board)):
+        for col in range(len(minesweepergame.board[0])):
+            entry_widget = puzzle_frame.grid_slaves(row=row, column=col)[0]
+            entry_widget.delete(0, tkinter.END)
+            entry_widget.insert(0, minesweepergame.board[row][col])
+
+            if row == action.x and col == action.y:
+                entry_widget['highlightbackground'] = 'Orange'
+            else:
+                entry_widget['highlightbackground'] = puzzle_frame.cget('background')
     # Disable editing the output puzzle
     OUTPUT_EDITABLE = False
 
@@ -354,7 +404,7 @@ def load_output_step(n):
     OUTPUT_STEP = n
     # step_n_lst = OUTPUT_LST[n]
     step_n_lst = minesweepergame.board
-    fill_puzzle_frame(output_puzzle_frame, step_n_lst)
+    fill_puzzle_frame(output_puzzle_frame, step_n_lst, OUTPUT_LST[n])
 
     output_step_text.delete(0, tkinter.END)
     output_step_text.insert(0, n)
