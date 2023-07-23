@@ -29,6 +29,7 @@ from tkinter import simpledialog
 from tkinter import filedialog, scrolledtext
 from game import MineSweeperGame
 from searchAgent import SearchAgent
+from queue import Queue
 
 import psutil
 
@@ -74,6 +75,8 @@ OUTPUT_EDITABLE = False
 # Indicates whether timer thread should clear status bar or not (It's useful when some problems happened)
 timer_clear_status_bar = False
 
+#Dict store cell search
+CELL_SEARCHED = {} 
 #set default maxtrix
 ROWS_MATRIX_DEFAULT = 5
 COLUMN_MATRIX_DEFAULT = 5
@@ -185,8 +188,45 @@ def create_puzzle_frame(parent_frame, numOfRows, numOfColumns, current_puzzle_fr
 
     return puzzle_frame
 
+# def open_zero_cell_around(puzzle_frame, row, col):
+#     entry_widget = puzzle_frame.grid_slaves(row=row, column=col)[0]
+#     if minesweepergame.board[row][col] == 0:
+#         entry_widget.config(bg="red")
+#         for i in range(-1, 2):
+#             for j in range(-1, 2):
+#                 search_row, search_col = row + i, col + j
+#                 if 0 <= row + i < minesweepergame.rows and 0 <= col + j < minesweepergame.cols and CELL_SEARCHED.get(f"{search_row}-{search_col}", False) == False:
+#                     # entry_widget.config(bg="red")
+#                     open_zero_cell_around(puzzle_frame, row + i, col + j)
+        
+#     return
+def open_zero_cell_around(puzzle_frame, start_row, start_col):
+    rows, cols = len(minesweepergame.board), len(minesweepergame.board[0])
+    visited = set()
+    queue = Queue()
+    queue.put((start_row, start_col))
 
-def fill_puzzle_frame(puzzle_frame, lst, action = None):
+    while not queue.empty():
+        row, col = queue.get()
+        entry_widget = puzzle_frame.grid_slaves(row=row, column=col)[0]
+        
+        if (row, col) in visited:
+            continue
+
+        visited.add((row, col))
+
+        if entry_widget.cget('bg') != "#CDCDC8" and entry_widget.cget('bg') != "green":
+            entry_widget.config(bg="#CDCDC8")
+        for i in range(-1, 2):
+            for j in range(-1, 2):
+                new_row, new_col = row + i, col + j
+                if 0 <= new_row < rows and 0 <= new_col < cols and (new_row, new_col) not in visited and minesweepergame.board[row][col] == 0:
+                    queue.put((new_row, new_col))
+
+    return
+
+
+def fill_puzzle_frame(puzzle_frame, board, action = None):
     """
     Fills a puzzle frame with a puzzle list.
     """
@@ -199,30 +239,61 @@ def fill_puzzle_frame(puzzle_frame, lst, action = None):
     # Enable editing the output puzzle temporarily
     OUTPUT_EDITABLE = True
     i = 0
-    for child in puzzle_frame.winfo_children():
+    # for child in puzzle_frame.winfo_children():
+    for i, child in enumerate(puzzle_frame.winfo_children()):
         child.delete(0, tkinter.END)
         child.insert(0, lst[i])
+        if puzzle_frame is input_puzzle_frame:
+            if hasattr(child, '_highlight_frame') and child._highlight_frame.winfo_exists():
+                child._highlight_frame.destroy()
+            # child.config(state=tkinter.DISABLED, bg="#CDCDC8")
+            child.config(state=tkinter.DISABLED, bg="#CDCDC8")
 
-        if puzzle_frame is output_puzzle_frame and lst[i] == 0:
-            child['highlightbackground'] = 'Orange'
-        elif puzzle_frame is output_puzzle_frame:
-            # Change the child's highlightbackground color to entry widget's default property using another
-            #   entry widget which we are sure has default property's value
-            child['highlightbackground'] = output_step_text['highlightbackground']
+        
+        # child['highlightbackground'] = 'red'
+        # puzzle_frame.after(1, set_highlight_background, child)
+
+        # if puzzle_frame is output_puzzle_frame and lst[i] == 0:
+        #     child['highlightbackground'] = 'Orange'
+        # elif puzzle_frame is output_puzzle_frame:
+        #     # Change the child's highlightbackground color to entry widget's default property using another
+        #     #   entry widget which we are sure has default property's value
+        #     child['highlightbackground'] = output_step_text['highlightbackground']
 
         i += 1
     
     if action != None:
+        print(action)
         for row in range(len(minesweepergame.board)):
             for col in range(len(minesweepergame.board[0])):
                 entry_widget = puzzle_frame.grid_slaves(row=row, column=col)[0]
-                entry_widget.delete(0, tkinter.END)
-                entry_widget.insert(0, minesweepergame.board[row][col])
+                # entry_widget.delete(0, tkinter.END)
+                # entry_widget.insert(0, minesweepergame.board[row][col])
+                if row == action.getX() and col == action.getY():
+                    # if minesweepergame.board[row][col] == 0:
+                    #     for i in range(-1, 2):
+                    #         for j in range(-1, 2):
+                    #             if 0 <= row + i < minesweepergame.rows and 0 <= col + j < minesweepergame.cols:
+                    #                 around_entry_widget = puzzle_frame.grid_slaves(row=row+i, column=col+j)[0]
+                    #                 around_entry_widget.config(bg="red")
 
-                if row == action.x and col == action.y:
-                    entry_widget['highlightbackground'] = 'Orange'
-                else:
-                    entry_widget['highlightbackground'] = puzzle_frame.cget('background')
+                    # CELL_SEARCHED[f"{row}-{col}"] = True
+                    open_zero_cell_around(puzzle_frame, row, col)
+                    entry_widget.config(bg="green")
+
+                # if row == action.getX() and col == action.getY():
+                #     entry_widget['highlightbackground'] = 'Orange'
+                # else:
+                #     entry_widget['highlightbackground'] = puzzle_frame.cget('background')
+    # if action != None:
+    #     print(action)
+    #     for i, child in enumerate(puzzle_frame.winfo_children()):
+    #         child.delete(0, tkinter.END)
+    #         child.insert(0, lst[i])
+    #         if puzzle_frame is output_puzzle_frame:
+    #             if hasattr(child, '_highlight_frame') and child._highlight_frame.winfo_exists():
+    #                 child._highlight_frame.destroy()
+    #             child.config(state=tkinter.DISABLED, bg="#CDCDC8")
     # Disable editing the output puzzle
     OUTPUT_EDITABLE = False
 
@@ -251,6 +322,7 @@ def fill_puzzle_frame_step_n(puzzle_frame, action):
     #         child['highlightbackground'] = output_step_text['highlightbackground']
 
     #     i += 1
+    print(action)
     for row in range(len(minesweepergame.board)):
         for col in range(len(minesweepergame.board[0])):
             entry_widget = puzzle_frame.grid_slaves(row=row, column=col)[0]
@@ -468,7 +540,8 @@ def piper():
                 # Converts output's puzzles to one dimensional representation of them
                 tmp_lst = []
                 for result in OUTPUT_LST:
-                    tmp_lst.append(puzzle_to_list(result))
+                    # tmp_lst.append(puzzle_to_list(result))
+                    tmp_lst.append(result)
                 OUTPUT_LST = tmp_lst
 
     except EOFError:
@@ -504,7 +577,7 @@ def piper():
 
         # Enable output's action frame
         config_frame_state(output_action_frame, tkinter.NORMAL)
-        output_to_label['text'] = len(OUTPUT_LST)
+        output_to_label['text'] = len(OUTPUT_LST)-1
         output_0_label['text'] = '0'
 
         # Load the first step to output puzzle
@@ -827,7 +900,7 @@ def output_0_to_label_click(n):
     Goes to first step of the output.
     """
     if output_0_label['cursor'] == 'fleur':
-        load_output_step(n)
+        load_output_step(n-1)
 
 
 # output_0_label widget
@@ -977,6 +1050,14 @@ input_action_frame.grid_columnconfigure(1, weight=1, uniform=1)
 input_action_frame.grid_columnconfigure(2, weight=1, uniform=1)
 input_action_frame.grid_columnconfigure(3, weight=1, uniform=1)
 
+def reset_cell_colors(puzzle_frame):
+    for entry_widget in puzzle_frame.winfo_children():
+        # Set the background color to the default color
+        entry_widget.config(bg="")  # Replace "" with the default color you want
+
+# Example usage:
+# Call this function whenever you need to reset the colors of all cells in the puzzle frame.
+
 def random_button_command(puzzle_frame):
     """
     Generates a random solvable puzzle and fills the puzzle_frame with it.
@@ -1012,7 +1093,9 @@ def random_button_command(puzzle_frame):
     new_minesweepergame = MineSweeperGame(ROWS_MATRIX_DEFAULT, ROWS_MATRIX_DEFAULT, NUM_OF_MINES)
     minesweepergame.board = new_minesweepergame.board
     minesweepergame.buttons = new_minesweepergame.buttons
+    # reset_cell_colors(puzzle_frame)
     fill_puzzle_frame(puzzle_frame, minesweepergame.board)
+    
 
 
 # Input's random button widget
