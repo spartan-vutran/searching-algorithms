@@ -214,6 +214,7 @@ class MineSweeperProblem(SearchProblem):
 def MineSweeperHeuristic(state: MineSweeperState, problem: MineSweeperProblem):
   cell_aside_bomb_count = set()
   # TODO: This algo is O(n^2), fix it if you have time
+  
   for i in range(problem.rows):
     for j in range(problem.cols):
       if problem.board[i][j] == -1:
@@ -225,6 +226,7 @@ def MineSweeperHeuristic(state: MineSweeperState, problem: MineSweeperProblem):
               continue
             if state[m, k] == 0 and problem.board[m][k] != -1: 
               cell_aside_bomb_count.add((m,k))
+
   
-  return len(cell_aside_bomb_count)
+  return len(cell_aside_bomb_count) - problem.goal_state.board.count(False)/state.board.count(False)
      
