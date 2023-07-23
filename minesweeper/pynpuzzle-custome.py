@@ -203,7 +203,7 @@ def fill_puzzle_frame(puzzle_frame, lst):
         child.delete(0, tkinter.END)
         child.insert(0, lst[i])
 
-        if puzzle_frame is output_puzzle_frame and lst[i][i] == 0:
+        if puzzle_frame is output_puzzle_frame and lst[i] == 0:
             child['highlightbackground'] = 'Orange'
         elif puzzle_frame is output_puzzle_frame:
             # Change the child's highlightbackground color to entry widget's default property using another
@@ -234,6 +234,19 @@ def list_to_puzzle(lst):
 
 
 def puzzle_to_list(puzzle):
+    """
+    Converts a two dimensional puzzle to a one dimensional puzzle.
+
+    [[1, 2, 3], [4, 5, 6], [7, 8, 9]] --> [1, 2, 3, 4, 5, 6, 7, 8, 0]
+    """
+    lst = []
+    # for row in puzzle:
+    #     lst.extend(row)
+    lst.append(puzzle)
+
+    return lst
+
+def actions_to_list(puzzle):
     """
     Converts a two dimensional puzzle to a one dimensional puzzle.
 
@@ -370,42 +383,43 @@ def piper():
         output_exception = False
 
         # # If the returned value is a string, Some exception has have happened
-        # if type(OUTPUT_LST) is str:
-        #     output_exception = True
-        # else:
-        #     # Validate algorithm's output
-        #     if not OUTPUT_LST:
-        #         output_error = True
-        #     elif type(OUTPUT_LST) is not list:
-        #         output_error = True
-        #     else:
-        #         try:
-        #             n = 6
-        #             sqrt_n = math.sqrt(n + 1)
-        #             for output_step in OUTPUT_LST:
-        #                 if type(output_step) is not list:
-        #                     raise BaseException()
-        #                 if len(output_step) != sqrt_n:
-        #                     raise BaseException()
-        #                 for step_row in output_step:
-        #                     if type(step_row) is not list:
-        #                         raise BaseException()
-        #                     if len(step_row) != sqrt_n:
-        #                         raise BaseException()
-        #                 if not check_puzzle_list([int(output_step[i][j])
-        #                                           for i in range(len(output_step))
-        #                                           for j in range(len(output_step))],
-        #                                          n):
-        #                     raise BaseException()
-        #         except:
-        #             output_error = True
+        if type(OUTPUT_LST) is str:
+            output_exception = True
+        else:
+            # Validate algorithm's output
+            if not OUTPUT_LST:
+                output_error = True
+            elif type(OUTPUT_LST) is not list:
+                output_error = True
+            else:
+                n = 6
+                # try:
+                #     n = 6
+                #     sqrt_n = math.sqrt(n + 1)
+                #     for output_step in OUTPUT_LST:
+                #         if type(output_step) is not list:
+                #             raise BaseException()
+                #         if len(output_step) != sqrt_n:
+                #             raise BaseException()
+                #         for step_row in output_step:
+                #             if type(step_row) is not list:
+                #                 raise BaseException()
+                #             if len(step_row) != sqrt_n:
+                #                 raise BaseException()
+                #         if not check_puzzle_list([int(output_step[i][j])
+                #                                   for i in range(len(output_step))
+                #                                   for j in range(len(output_step))],
+                #                                  n):
+                #             raise BaseException()
+                # except:
+                #     output_error = True
 
-        #     if not output_error:
-        #         # Converts output's puzzles to one dimensional representation of them
-        #         tmp_lst = []
-        #         for result in OUTPUT_LST:
-        #             tmp_lst.append(puzzle_to_list(result))
-        #         OUTPUT_LST = tmp_lst
+            if not output_error:
+                # Converts output's puzzles to one dimensional representation of them
+                tmp_lst = []
+                for result in OUTPUT_LST:
+                    tmp_lst.append(puzzle_to_list(result))
+                OUTPUT_LST = tmp_lst
 
     except EOFError:
         # Stop button pressed
@@ -421,30 +435,30 @@ def piper():
         calculation_stop()
 
         # If some exception has have happened inside algorithm's function
-        # if output_exception:
-        #     messagebox.showerror("Algorithm exception", "Some exception happened in algorithm's source code:\n\n" +
-        #                          OUTPUT_LST, parent=main_window)
+        if output_exception:
+            messagebox.showerror("Algorithm exception", "Some exception happened in algorithm's source code:\n\n" +
+                                 OUTPUT_LST, parent=main_window)
 
-        #     OUTPUT_LST = []
-        #     OUTPUT_STEP = 0
+            OUTPUT_LST = []
+            OUTPUT_STEP = 0
 
-        #     return
+            return
 
-        # if output_error:
-        #     messagebox.showerror("Algorithm output error", "Algorithm's output is not valid.", parent=main_window)
+        if output_error:
+            messagebox.showerror("Algorithm output error", "Algorithm's output is not valid.", parent=main_window)
 
-        #     OUTPUT_LST = []
-        #     OUTPUT_STEP = 0
+            OUTPUT_LST = []
+            OUTPUT_STEP = 0
 
-        #     return
+            return
 
-        # # Enable output's action frame
-        # config_frame_state(output_action_frame, tkinter.NORMAL)
-        # output_to_label['text'] = len(OUTPUT_LST) - 1
-        # output_0_label['text'] = '0'
+        # Enable output's action frame
+        config_frame_state(output_action_frame, tkinter.NORMAL)
+        output_to_label['text'] = len(OUTPUT_LST)
+        output_0_label['text'] = '0'
 
-        # # Load the first step to output puzzle
-        # load_output_step(0)
+        # Load the first step to output puzzle
+        load_output_step(0)
 
 
 def start_piping():
@@ -855,7 +869,7 @@ def play_button_command():
             if OUTPUT_STEP == int(output_to_label['text']):
                 output_stop_button_cmd()
                 return
-            play_event.wait(1)
+            play_event.wait(2)
 
     # Disable play button
     output_play_button['state'] = tkinter.DISABLED
@@ -945,7 +959,9 @@ def random_button_command(puzzle_frame):
     #         lst[0], lst[1] = lst[1], lst[0]
     #     else:
     #         lst[len(lst) - 1], lst[len(lst) - 2] = lst[len(lst) - 2], lst[len(lst) - 1]
-
+    new_minesweepergame = MineSweeperGame(ROWS_MATRIX_DEFAULT, ROWS_MATRIX_DEFAULT, NUM_OF_MINES)
+    minesweepergame.board = new_minesweepergame.board
+    minesweepergame.buttons = new_minesweepergame.buttons
     fill_puzzle_frame(puzzle_frame, minesweepergame.board)
 
 
