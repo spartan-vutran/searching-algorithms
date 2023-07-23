@@ -82,10 +82,11 @@ class SearchAgent(Agent):
     state: a GameState object (minesweeper.py)
     """
     # TODO: We have to define action first
-    if 'actionIndex' not in dir(self): self.actionIndex = 0
-    i = self.actionIndex
-    self.actionIndex += 1
-    if i < len(self.actions):
-        yield self.actions[i]
+    return self.actions
+    # if 'actionIndex' not in dir(self): self.actionIndex = 0
+    # i = self.actionIndex
+    # self.actionIndex += 1
+    # if i < len(self.actions):
+    #     yield self.actions[i]
     # else:
     #     return Directions.STOP
