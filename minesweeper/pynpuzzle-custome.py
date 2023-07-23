@@ -1090,6 +1090,25 @@ def random_button_command(puzzle_frame):
     #         lst[0], lst[1] = lst[1], lst[0]
     #     else:
     #         lst[len(lst) - 1], lst[len(lst) - 2] = lst[len(lst) - 2], lst[len(lst) - 1]
+   
+
+    #test
+    # stop_button['state'] = tkinter.NORMAL
+    # n_spinbox['state'] = tkinter.DISABLED
+    config_io_frame_state(input_labelframe, tkinter.NORMAL)
+    output_to_label['text'] = ''
+    output_0_label['text'] = ''
+    output_step_text.delete(0, tkinter.END)
+    config_io_frame_state(output_labelframe, tkinter.NORMAL)
+    # Clear output puzzle
+    OUTPUT_EDITABLE = True
+    for child in output_puzzle_frame.winfo_children():
+        # if child.get().strip() == '':
+        #     child['highlightbackground'] = output_step_text['highlightbackground']
+        child.config(bg="white")
+        child.delete(0, tkinter.END)
+    OUTPUT_EDITABLE = False
+
     new_minesweepergame = MineSweeperGame(ROWS_MATRIX_DEFAULT, ROWS_MATRIX_DEFAULT, NUM_OF_MINES)
     minesweepergame.board = new_minesweepergame.board
     minesweepergame.buttons = new_minesweepergame.buttons
