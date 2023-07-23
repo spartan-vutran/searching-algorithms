@@ -84,7 +84,6 @@ class MineSweeperState():
     else:
         raise TypeError("Invalid index format. Use (row, col)")
 
-  
 
 class MineSweeperProblem(SearchProblem):
     """
@@ -110,16 +109,18 @@ class MineSweeperProblem(SearchProblem):
       self.rows = gameState.rows
       # Init start state
       start_pos = 0
-      start_row = 0
-      start_col =0
-      while(self.board[start_col][start_row]==-1):
+      self.start_row = 0
+      self.start_col =0
+      while(self.board[self.start_col][self.start_row]==-1):
         start_pos +=1
-        start_row = start_pos//self.cols 
-        start_col = start_pos%self.cols 
+        self.start_row = start_pos//self.cols 
+        self.start_col = start_pos%self.cols 
 
       # Create start_state
       self.start_state = MineSweeperState(gameState)
-      self.start_state[start_row, start_col] = 1
+      if self.board[self.start_row][self.start_col] == 0:
+        self.expand(self.start_state, self.start_row, self.start_col)
+      self.start_state[self.start_row, self.start_col] = 1
 
       # Create goal state
       self.goal_state = MineSweeperState(gameState)
@@ -142,9 +143,28 @@ class MineSweeperProblem(SearchProblem):
 
         Returns True if and only if the state is a valid goal state.
         """
-        return state == self.goal_state
+        return state.board == self.goal_state.board
         # util.raiseNotDefined()
+    
 
+    def expand(self, state:MineSweeperState, row, col):
+      # This function is called only when the touched cell is zero to expand and generate skipped state
+      if self.board[row][col] != 0:
+        return
+
+      state[row,col] = 1 
+      for i in [row-1, row, row+1]:
+        if (i<0 or i>= self.rows):
+          continue
+        for j in [col-1, col, col+1]:
+          if (j<0 or j>=self.cols) or (state[i,j] == 1):
+            continue
+          if self.board[i][j] == 0:
+            self.expand(state, i, j)
+          else:
+            state[i, j] = 1
+
+      
     def getSuccessors(self, state: MineSweeperState):
       """
       state: Search state
@@ -163,9 +183,11 @@ class MineSweeperProblem(SearchProblem):
         for j in range(state.cols):
            if state[i, j] == 0:
               successor = copy.deepcopy(state)
-              successor[i, j] = 1
               if self.board[i][j] == -1: #If the successor press a mine
                 successor.isLose = True
+              elif self.board[i][j] == 0:
+                self.expand(successor, i, j)
+              successor[i, j] = 1
               successors.append((successor, Action(i,j), 1))
       return successors
 

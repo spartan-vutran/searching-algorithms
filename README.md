@@ -16,5 +16,5 @@ python SudokuGui.py
 ```
 
 ## 2. Todo list
-[ ] UI for evaluate algorithms
-[ ] Implement backend 
+- [ ] UI for evaluate algorithms
+- [ ] Implement backend 

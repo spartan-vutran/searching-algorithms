@@ -53,13 +53,13 @@ class MineSweeperGame:
       return
 
     if cell_value == 0:
-        self.buttons[row][col].config(text=' ', state=tk.DISABLED, relief=tk.SUNKEN)
+        self.buttons[row][col].config(text=' ', state=tk.DISABLED, relief=tk.SUNKEN, bg="red")
         for i in range(-1, 2):
             for j in range(-1, 2):
                 if 0 <= row + i < rows and 0 <= col + j < cols and self.buttons[row + i][col + j]['state'] == tk.NORMAL:
                     self.reveal_cell(row + i, col + j)
     else:
-        self.buttons[row][col].config(text=str(cell_value), state=tk.DISABLED, relief=tk.SUNKEN)
+        self.buttons[row][col].config(text=str(cell_value), state=tk.DISABLED, relief=tk.SUNKEN, bg="red")
     
     self.leftCount -= 1
     if self.leftCount == self.num_mines: #Check win 
@@ -71,7 +71,7 @@ class MineSweeperGame:
     for i in range(rows):
       for j in range(cols):
           self.board[i][j] = 0
-          self.buttons[i][j].config(text='', state=tk.NORMAL, relief=tk.RAISED)
+          self.buttons[i][j].config(text='', state=tk.NORMAL, relief=tk.RAISED, bg="#dddddd")
     self.replay_button.config(image=self.playing_icon)
     self.leftCount = self.rows*self.cols
     self.initBoard()
@@ -106,10 +106,13 @@ class MineSweeperGame:
 
 
   def runAgent(self):
-    agent = SearchAgent("simpleDepthFirstSearch", "MineSweeperProblem")
+    agent = SearchAgent("depthFirstSearch", "MineSweeperProblem")
     agent.registerInitialState(self)
 
+    count = 1
     for action in agent.getAction(1):
+      print(f"Action{count}: {action.x}, {action.y}")
+      count +=1
       self.reveal_cell(action.x, action.y)
 
 # pathfinding_thread = None
@@ -128,9 +131,9 @@ class MineSweeperGame:
 #   display_thread.start()
 
 if __name__ == '__main__':
-  rows = 8
-  cols = 8
-  num_mines = 2
+  rows = 5
+  cols = 5
+  num_mines = 4
 
   game = MineSweeperGame(rows, cols, num_mines)
   game.run_game()
