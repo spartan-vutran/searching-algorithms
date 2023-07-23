@@ -44,7 +44,7 @@ class SearchProblem:
         return 1
         # util.raiseNotDefined()
 
-class SimpleProblem(SearchProblem):
+class MineSweeperProblem(SearchProblem):
     """
     A search problem defines the state space, start state, goal test, successor function and cost function. 
 
@@ -52,14 +52,15 @@ class SimpleProblem(SearchProblem):
 
     Note: this search problem is fully specified; you should NOT change it.
     """
-    def __init__(self, gameState, goal= 1, costFn = lambda x: 1, start = None, warn=True, visualize=True):
+    def __init__(self, gameState, goal= 1, costFn = lambda x: 1, start = None):
       """
       Stores the start and goal. 
-      gameState: A GameState object (minesweeper.py)
+      gameState: A MineSweeperGame object (minesweeper.py)
       costFn: A function from a search state (tuple) to a non-negative number
       goal: A position in the gameState
       """
-      # self.walls =gameState.
+      # self.board = gameState.board
+
       return None
 
     def getCostOfActions(self, actions):

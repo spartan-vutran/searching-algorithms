@@ -2,11 +2,9 @@ import tkinter as tk
 import random
 import utils
 from searchAgent import SearchAgent
-import threading
 
 
-
-class Game:
+class MineSweeperGame:
   def __init__(self, rows, cols, num_mines):
     self.rows = rows
     self.cols = cols
@@ -64,7 +62,6 @@ class Game:
         self.buttons[row][col].config(text=str(cell_value), state=tk.DISABLED, relief=tk.SUNKEN)
     
     self.leftCount -= 1
-    print(self.leftCount)
     if self.leftCount == self.num_mines: #Check win 
       self.end_game()
       self.replay_button.config(image=self.win_icon)
@@ -97,21 +94,23 @@ class Game:
     self.win_icon = utils.resize_icon_image("./assets/win.png", 35, 35)
 
     self.replay_button = tk.Button(root, width=40, height=40, command=self.replay, image=self.playing_icon, borderwidth=0, highlightthickness=0,compound=tk.CENTER) 
-    self.replay_button.grid(row=self.rows, column=int(self.cols*0.5), columnspan=1, pady=10)
-
+    self.find_path_button = tk.Button(root, text="Find", width=5, height=2, command=self.runAgent, compound=tk.CENTER)
     bomb_count_label = tk.Label(root, text="Bombs: {}".format(self.num_mines), compound=tk.CENTER)
-    bomb_count_label.grid(row=self.rows, column=int(self.cols*0.25), columnspan=2, pady=10)
+
+    self.replay_button.grid(row=self.rows, column=int(self.cols*0.45), columnspan=1, pady=10)
+    self.find_path_button.grid(row=self.rows, column=int(self.cols*0.7), columnspan=2, pady=10)
+    bomb_count_label.grid(row=self.rows, column=int(self.cols*0.2), columnspan=2, pady=10)
 
     # self.runAgent()
     root.mainloop()
 
 
-  # def runAgent(self):
-  #   agent = SearchAgent("testSearch")
-  #   agent.registerInitialState(1)
+  def runAgent(self):
+    agent = SearchAgent("testSearch", "MineSweeperProblem")
+    agent.registerInitialState(1)
 
-  #   for action in agent.getAction(1):
-  #     self.reveal_cell(action.x, action.y)
+    for action in agent.getAction(1):
+      self.reveal_cell(action.x, action.y)
 
 # pathfinding_thread = None
 # display_thread = None
@@ -133,5 +132,5 @@ if __name__ == '__main__':
   cols = 8
   num_mines = 2
 
-  game = Game(rows, cols, num_mines)
+  game = MineSweeperGame(rows, cols, num_mines)
   game.run_game()
