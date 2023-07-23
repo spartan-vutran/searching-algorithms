@@ -68,7 +68,7 @@ class SearchAgent(Agent):
     if self.searchFunction == None:
       raise (Exception, "No search function provided for SearchAgent")
     starttime = time.time()
-    problem = self.searchType(state) # Makes a new search problem
+    problem = self.searchType(state) # Makes a new search problem, make sure state is your specific game state (Minesweeper or Sudoku)
     self.actions = self.searchFunction(problem) #Find a path
     totalCost = problem.getCostOfActions(self.actions)
     print('Path found with total cost of %d in %.1f seconds' % (totalCost, time.time() - starttime))
