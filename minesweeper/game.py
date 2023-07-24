@@ -129,6 +129,17 @@ class MineSweeperGame:
       count +=1
       self.reveal_cell(action.x, action.y)
 
+  def runAgentWihtoutDisplay(self, algorithm):
+    # aStarSearch
+    agent = SearchAgent("depthFirstSearch", "MineSweeperProblem")
+    if algorithm == "A*":
+      agent = SearchAgent("aStarSearch", "MineSweeperProblem", "MineSweeperHeuristic")
+    elif algorithm == "BrFs":
+      #change into Breath First Search when it defined
+      agent = SearchAgent("depthFirstSearch", "MineSweeperProblem")
+    agent.registerInitialState(self)
+    return agent.getAction(1)
+
 # pathfinding_thread = None
 # display_thread = None
     
