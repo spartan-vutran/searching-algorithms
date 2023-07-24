@@ -93,7 +93,7 @@ BOARD = [
         [1,1,1,-1,2,1,2,-1,2,0,],
         [-1,1,1,1,1,0,2,-1,2,0,],
   ]
-minesweepergame = MineSweeperGame(ROWS_MATRIX_DEFAULT, ROWS_MATRIX_DEFAULT, NUM_OF_MINES)
+minesweepergame = MineSweeperGame(ROWS_MATRIX_DEFAULT, ROWS_MATRIX_DEFAULT, NUM_OF_MINES, BOARD)
 
 # Main window
 main_window = tkinter.Tk()
@@ -1109,7 +1109,7 @@ def random_button_command(puzzle_frame):
     #test
     # stop_button['state'] = tkinter.NORMAL
     # n_spinbox['state'] = tkinter.DISABLED
-    config_io_frame_state(input_labelframe, tkinter.NORMAL)
+    # config_io_frame_state(input_labelframe, tkinter.NORMAL)
     output_to_label['text'] = ''
     output_0_label['text'] = ''
     output_step_text.delete(0, tkinter.END)
@@ -1123,7 +1123,7 @@ def random_button_command(puzzle_frame):
         child.delete(0, tkinter.END)
     OUTPUT_EDITABLE = False
 
-    new_minesweepergame = MineSweeperGame(ROWS_MATRIX_DEFAULT, ROWS_MATRIX_DEFAULT, NUM_OF_MINES, BOARD)
+    new_minesweepergame = MineSweeperGame(ROWS_MATRIX_DEFAULT, ROWS_MATRIX_DEFAULT, NUM_OF_MINES)
     minesweepergame.board = new_minesweepergame.board
     minesweepergame.buttons = new_minesweepergame.buttons
     # reset_cell_colors(puzzle_frame)
@@ -1212,6 +1212,7 @@ status_frame.columnconfigure(2, weight=1, uniform=1)
 status_frame.columnconfigure(3, weight=1, uniform=1)
 
 load_algorithms()
+fill_puzzle_frame(input_puzzle_frame, minesweepergame.board)
 
 
 def available_ram_display():
