@@ -78,9 +78,21 @@ timer_clear_status_bar = False
 #Dict store cell search
 CELL_SEARCHED = {} 
 #set default maxtrix
-ROWS_MATRIX_DEFAULT = 5
-COLUMN_MATRIX_DEFAULT = 5
-NUM_OF_MINES = 2
+ROWS_MATRIX_DEFAULT = 10
+COLUMN_MATRIX_DEFAULT = 10
+NUM_OF_MINES = 12
+BOARD = [
+        [0,0,0,0,0,1,1,1,0,0,],
+        [0,0,0,0,0,1,-1,1,0,0,],
+        [0,0,1,2,2,2,1,1,0,0,],
+        [0,1,2,-1,-1,1,0,0,0,0,],
+        [0,1,-1,4,3,2,0,0,1,1,],
+        [1,2,2,2,-1,1,0,0,1,-1,],
+        [1,-1,1,2,2,2,0,0,1,1,],
+        [1,1,2,2,-1,1,1,1,1,0,],
+        [1,1,1,-1,2,1,2,-1,2,0,],
+        [-1,1,1,1,1,0,2,-1,2,0,],
+  ]
 minesweepergame = MineSweeperGame(ROWS_MATRIX_DEFAULT, ROWS_MATRIX_DEFAULT, NUM_OF_MINES)
 
 # Main window
@@ -693,18 +705,18 @@ def load_algorithms():
 
     algorithms_modules = list(filter(check_search_function_arguments, algorithms_modules))
 
-    algorithms_names = []
-    for module in algorithms_modules:
-        search_name = module.search.__doc__
-        # If algorithm's name is not defined in search function's docstring
-        if not search_name:
-            LOGS.append(
-                log_datetime() + " : Warning : Algorithm's name not defined : " + module.__name__[11:] + '.py\n')
+    algorithms_names = ["A*", "DFS", "BrFS"]
+    # for module in algorithms_modules:
+    #     search_name = module.search.__doc__
+    #     # If algorithm's name is not defined in search function's docstring
+    #     if not search_name:
+    #         LOGS.append(
+    #             log_datetime() + " : Warning : Algorithm's name not defined : " + module.__name__[11:] + '.py\n')
 
-            search_name = module.__name__[11:]
+    #         search_name = module.__name__[11:]
 
-        module.search.__doc__ = search_name.strip()
-        algorithms_names.append(module.search.__doc__)
+    #     module.search.__doc__ = search_name.strip()
+    #     algorithms_names.append(module.search.__doc__)
 
     update_logs_text_if_visible()
 
@@ -854,19 +866,21 @@ def start_button_cmd():
     # Clear output puzzle
     OUTPUT_EDITABLE = True
     for child in output_puzzle_frame.winfo_children():
-        if child.get().strip() == '':
-            child['highlightbackground'] = output_step_text['highlightbackground']
+        # if child.get().strip() == '':
+        #     child['highlightbackground'] = output_step_text['highlightbackground']
+        child.config(bg="white")
         child.delete(0, tkinter.END)
     OUTPUT_EDITABLE = False
     # Find the search function of the selected algorithm
     # for module in algorithms_modules:
     #     if module.search.__doc__ == algorithm_name.get():
     #         search_function = module.search
+    print(algorithm_name.get())
     search_function = minesweepergame.runAgentWihtoutDisplay
     # Algorithm's search process
     search_process = multiprocessing.Process(target=search_runner,
                                              args=(search_function,
-                                                   start_piping(), 1))
+                                                   start_piping(), algorithm_name.get()))
     search_process.daemon = True
     search_process.start()
     start_timer()
@@ -992,7 +1006,7 @@ def play_button_command():
             if OUTPUT_STEP == int(output_to_label['text']):
                 output_stop_button_cmd()
                 return
-            play_event.wait(2)
+            play_event.wait(1)
 
     # Disable play button
     output_play_button['state'] = tkinter.DISABLED
@@ -1109,7 +1123,7 @@ def random_button_command(puzzle_frame):
         child.delete(0, tkinter.END)
     OUTPUT_EDITABLE = False
 
-    new_minesweepergame = MineSweeperGame(ROWS_MATRIX_DEFAULT, ROWS_MATRIX_DEFAULT, NUM_OF_MINES)
+    new_minesweepergame = MineSweeperGame(ROWS_MATRIX_DEFAULT, ROWS_MATRIX_DEFAULT, NUM_OF_MINES, BOARD)
     minesweepergame.board = new_minesweepergame.board
     minesweepergame.buttons = new_minesweepergame.buttons
     # reset_cell_colors(puzzle_frame)
