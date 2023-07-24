@@ -37,11 +37,6 @@ import psutil
 #
 # Stores app logs
 LOGS = []
-# Loaded algorithms modules from ./algorithm/ folder
-algorithms_modules = []
-# Process that runs the algorithm
-# If it's None it means app is not calculating
-# If it's not None it contains multiprocessing.Process object and app is calculating
 search_process = None
 # An event object that tells the timer thread to stop
 timer_event = multiprocessing.Event()
@@ -639,85 +634,9 @@ def load_algorithms():
     Load algorithm's modules from ./algorithm/ folder.
     It assumes all python files as algorithms and tries to load them.
     """
-    global algorithms_modules
+    
     global LOGS
-
-    # Get list of all files' names
-    algorithms_files = [f for f in listdir('./algorithms/') if isfile(join('./algorithms/', f))]
-    # Keep all python files's names
-    algorithms_files = [f for f in algorithms_files if f.endswith('.py')]
-    # Remove .py extension from their file's names
-    algorithms_files = [f.rstrip('.py') for f in algorithms_files]
-
-    for module in algorithms_modules:
-        try:
-            # If the module is already loaded remove it, so it can be reloaded.
-            # This happens in algorithm's reloading process.
-            del sys.modules[module.__name__]
-        except:
-            pass
-
-    algorithms_modules = []
-
-    for file in algorithms_files:
-        try:
-            # Try to import the module and add it to algorithms modules list
-            algorithms_modules.append(import_module('algorithms.' + file))
-        # If some problem happened when importing the module (For example if the module has some syntax errors).
-        except:
-            LOGS.append(log_datetime() + " : Error : Exception raised : " + file + ".py\n")
-
-    for module in algorithms_modules:
-        LOGS.append(log_datetime() + " : OK : Loaded : " + module.__name__[11:] + ".py\n")
-
-    def check_search_function(module):
-        """
-        Checks if the module has a search function.
-        """
-        global LOGS
-
-        if not getattr(module, 'search', None):
-            LOGS.append(log_datetime() +
-                        " : Error : Algorithm's search not defined : " +
-                        module.__name__[11:] +
-                        '.py\n')
-
-            return False
-
-        return True
-
-    algorithms_modules = list(filter(check_search_function, algorithms_modules))
-
-    def check_search_function_arguments(module):
-        """
-        Checks if the module's search function's arguments are proper.
-        """
-        global LOGS
-
-        if getattr(module, 'search').__code__.co_argcount != 2:
-            LOGS.append(log_datetime() +
-                        " : Error : Search function should only accept 2 positional arguments : "
-                        + module.__name__[11:] + '.py\n')
-
-            return False
-
-        return True
-
-    algorithms_modules = list(filter(check_search_function_arguments, algorithms_modules))
-
     algorithms_names = ["A*", "DFS", "BrFS"]
-    # for module in algorithms_modules:
-    #     search_name = module.search.__doc__
-    #     # If algorithm's name is not defined in search function's docstring
-    #     if not search_name:
-    #         LOGS.append(
-    #             log_datetime() + " : Warning : Algorithm's name not defined : " + module.__name__[11:] + '.py\n')
-
-    #         search_name = module.__name__[11:]
-
-    #     module.search.__doc__ = search_name.strip()
-    #     algorithms_names.append(module.search.__doc__)
-
     update_logs_text_if_visible()
 
     prev_algorithm_name = algorithm_name.get()
@@ -843,9 +762,6 @@ def start_button_cmd():
     global search_process
     global OUTPUT_EDITABLE
 
-    if not len(algorithms_modules):
-        return
-
     # Check if input puzzle has a valid input
     lst = is_input_puzzle_valid(input_puzzle_frame)
     if not lst:
@@ -871,10 +787,6 @@ def start_button_cmd():
         child.config(bg="white")
         child.delete(0, tkinter.END)
     OUTPUT_EDITABLE = False
-    # Find the search function of the selected algorithm
-    # for module in algorithms_modules:
-    #     if module.search.__doc__ == algorithm_name.get():
-    #         search_function = module.search
     print(algorithm_name.get())
     search_function = minesweepergame.runAgentWihtoutDisplay
     # Algorithm's search process
