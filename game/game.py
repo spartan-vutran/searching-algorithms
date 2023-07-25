@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 import random
 import utils
 from searchAgent import SearchAgent
@@ -7,7 +8,11 @@ import threading
 from random import choice, randint
 import time
 import math
+import psutil
 
+
+time_used = 0
+memory_used = 0
 
 
 class MineSweeperGame:
@@ -205,7 +210,21 @@ class SudokuGame():
         else:
           self.grid_boxes_values = board
           self.size = len(self.grid_boxes_values)
+        
+        #custom for new UI
+        self.memory_used = tk.StringVar()
+        self.memory_used.set("")
+        
+        self.time_used = tk.StringVar()
+        self.time_used.set("")
+
+        self.algorithm_name = tk.StringVar()
+        self.algorithm_name.set("")
+
+        self.algorithm_combobox = None
+        ##
         self.setup_gui()
+        self.load_algorithms()
         # self.grid_boxes_values = [[1, 0, 0, 0, 7, 0, 3, 0, 0],
         #                           [0, 8, 0, 0, 2, 0, 7, 0, 0],
         #                           [3, 0, 0, 0, 8, 9, 0, 0, 4],
@@ -224,6 +243,22 @@ class SudokuGame():
         self.set_grid_gui_from_values(self.grid_boxes_values)
         self.total_sleep_time = 0
 
+    def load_algorithms(self):
+        algorithms_names = ["A*", "DFS", "BrFS"]
+
+        prev_algorithm_name = self.algorithm_name.get()
+        # Update algorithms combobox with loaded algorithm's names
+        self.algorithm_combobox['values'] = algorithms_names
+        # If there is any loaded algorithms
+        if len(algorithms_names):
+            if algorithms_names.count(prev_algorithm_name):
+                # Select the previously selected algorithm
+                self.algorithm_combobox.set(prev_algorithm_name)
+            else:
+                # Select the first algorithm from combobox
+                self.algorithm_combobox.set(algorithms_names[0])
+
+
     def setup_gui(self):
         """Creates buttons and labels used in the GUI"""
         self.window.title("Sudoku")
@@ -234,7 +269,8 @@ class SudokuGame():
         self.feedback_label.grid(column=int(self.size*0.3), row=self.size+3, columnspan=2)
 
     def set_dimensions(self):
-        self.window.geometry('690x550')
+        # self.window.geometry('690x550')
+        self.window.geometry('690x600')
         self.window.columnconfigure(0, minsize=20)
         self.window.rowconfigure(0, minsize=20)
         self.window.rowconfigure(self.size+1, minsize=20)
@@ -251,6 +287,41 @@ class SudokuGame():
         solve_board_button.grid(column=int(self.size*0.75), row=self.size+2, columnspan=2 if self.size > 4 else 1)
         # self.buttons = [solve_board_button, check_solution_button, new_board_button, reset_board_button]
         self.buttons = [solve_board_button, new_board_button, reset_board_button]
+
+        #custom UI
+        status_frame = tk.Frame(self.window, bd=1, relief=tk.SUNKEN,)
+        status_frame_1 = tk.Frame(status_frame, bd=1, relief=tk.GROOVE)
+        tk.Label(status_frame_1, text="Execution time(s): ").grid(row=0, column=0, sticky='WENS', padx=2)
+        tk.Label(status_frame_1, textvariable= self.time_used).grid(row=0, column=1, sticky='W')
+        status_frame_1.grid_columnconfigure(1, weight=1)
+        status_frame_1.grid(row=0, column=1, sticky='WENS')
+
+        mem_status_frame_1 = tk.Frame(status_frame, bd=1, relief=tk.GROOVE)
+        tk.Label(mem_status_frame_1, text="Memory used (Mb): ").grid(row=0, column=0, sticky='WENS', padx=2)
+        tk.Label(mem_status_frame_1, textvariable= self.memory_used).grid(row=0, column=1, sticky='W')
+        mem_status_frame_1.grid_columnconfigure(1, weight=1)
+        mem_status_frame_1.grid(row=0, column=3, sticky='WENS')
+
+         # Place status_frame inside the window
+        status_frame.grid(row=13, column=0, columnspan=8, sticky='WENS')
+        status_frame.columnconfigure(1, weight=1, uniform=1)
+
+         # Algorithm frame
+        # algorithm_frame = tk.Frame(self.window)
+        algorithm_frame = tk.Frame(status_frame)
+        algorithm_frame.grid(row=15, column=1, sticky='EWN', padx=5, pady=5)
+        algorithm_frame.grid_rowconfigure(15, weight=1)
+        algorithm_frame.grid_columnconfigure(1, weight=1)
+        # Algorithm label
+        algorithm_combobox_label = tk.Label(algorithm_frame, text="Algorithm: ")
+        algorithm_combobox_label.grid(row=15, column=0)
+        # Algorithm combobox
+        # algorithm_name = tk.StringVar()
+        self.algorithm_combobox = ttk.Combobox(algorithm_frame,
+                                        textvariable=self.algorithm_name,
+                                        validate=tk.ALL,
+                                        validatecommand=lambda: False)
+        self.algorithm_combobox.grid(row=15, column= 3, sticky='EWN')
 
     def create_grid_gui(self):
         """Creates the GUI squares for the sudoku board"""
@@ -381,9 +452,23 @@ class SudokuGame():
 
     def runAgent(self):
       # First disable button
-      # agent = SearchAgent("depthFirstSearch", "SudokuProblem", useSmallestBf=True)
-      agent = SearchAgent("aStarSearch", "SudokuProblem", "SudokuHeuristic", useSmallestBf=True)
+      global time_used, memory_used
+      start_time = time.time()
+      start_memory_usage = psutil.Process().memory_info().rss / 1024.0 / 1024.0
+      agent = None
+
+      if self.algorithm_name == "A*":
+        agent = SearchAgent("aStarSearch", "SudokuProblem", "SudokuHeuristic", useSmallestBf=True)
+      elif self.algorithm_name == "DFS": 
+        agent = SearchAgent("depthFirstSearch", "SudokuProblem", useSmallestBf=True)
+      else: agent = SearchAgent("depthFirstSearch", "SudokuProblem", useSmallestBf=True)
+      
       agent.registerInitialState(self)
+
+      end_time = time.time()
+      end_memory_usage = psutil.Process().memory_info().rss / 1024.0 / 1024.0
+      self.time_used.set(round(end_time - start_time, 3))
+      self.memory_used.set(round(end_memory_usage - start_memory_usage, 3))
       # TODO: Run your agent here
       explored_paths = agent.getExploredAction()
 
@@ -462,10 +547,10 @@ if __name__ == '__main__':
 
   ################## SUDOKU #############################
   ## Init with board
-  board = [[9, 8, 0, 0, 0, 0, 0, 2, 0], [0, 2, 0, 0, 0, 0, 3, 9, 7], [0, 3, 1, 0, 0, 9, 5, 0, 8], [0, 0, 0, 4, 7, 5, 0, 1, 0], [0, 0, 0, 0, 1, 2, 0, 8, 0], [4, 1, 0, 0, 3, 0, 0, 5, 0], [3, 7, 0, 1, 0, 0, 0, 0, 2], [0, 0, 0, 0, 8, 0, 1, 7, 0], [0, 6, 8, 0, 5, 0, 0, 0, 0]]
-  window = tk.Tk()
-  SudokuGame(window, 9, board)
-  window.mainloop()
+  # board = [[9, 8, 0, 0, 0, 0, 0, 2, 0], [0, 2, 0, 0, 0, 0, 3, 9, 7], [0, 3, 1, 0, 0, 9, 5, 0, 8], [0, 0, 0, 4, 7, 5, 0, 1, 0], [0, 0, 0, 0, 1, 2, 0, 8, 0], [4, 1, 0, 0, 3, 0, 0, 5, 0], [3, 7, 0, 1, 0, 0, 0, 0, 2], [0, 0, 0, 0, 8, 0, 1, 7, 0], [0, 6, 8, 0, 5, 0, 0, 0, 0]]
+  # window = tk.Tk()
+  # SudokuGame(window, 9, board)
+  # window.mainloop()
 
   # Init with random board
   # window = tk.Tk()

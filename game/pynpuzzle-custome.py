@@ -661,7 +661,7 @@ n_frame.grid(row=0, column=0, sticky='EWN', padx=5, pady=5)
 n_frame.grid_rowconfigure(0, weight=1)
 n_frame.grid_columnconfigure(1, weight=1)
 # n label
-tkinter.Label(n_frame, text="n: ").grid(row=0, column=0)
+tkinter.Label(n_frame, text="").grid(row=0, column=0)
 
 # Algorithm frame
 algorithm_frame = tkinter.Frame(main_window)
