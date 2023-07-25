@@ -92,7 +92,7 @@ minesweepergame = MineSweeperGame(ROWS_MATRIX_DEFAULT, ROWS_MATRIX_DEFAULT, NUM_
 
 # Main window
 main_window = tkinter.Tk()
-main_window.title("pynpuzzle - Solve n-puzzle with Python")
+main_window.title("MineSweeper with Python")
 main_window.grid_rowconfigure(2, weight=1)
 main_window.grid_columnconfigure(0, weight=1, uniform=1)
 main_window.grid_columnconfigure(1, weight=1, uniform=1)

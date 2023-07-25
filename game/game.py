@@ -38,6 +38,18 @@ class MineSweeperGame:
     self.buttons = [[None for _ in range(self.cols)] for _ in range(self.rows)]
     self.leftCount = self.rows*self.cols
 
+    #statistic
+    self.exploredAction = 0
+    self.memory_used = tk.StringVar()
+    self.memory_used.set("")
+    
+    self.time_used = tk.StringVar()
+    self.time_used.set("")
+
+  def clear(self):
+    self.time_used.set("")
+    self.memory_used.set("")
+    self.exploredAction = 0
 
   def initBoard(self):
     mines = random.sample(range(self.rows * self.cols), self.num_mines)
@@ -151,6 +163,27 @@ class MineSweeperGame:
       agent = SearchAgent("depthFirstSearch", "MineSweeperProblem")
     agent.registerInitialState(self)
     return agent.getAction()
+  
+  def runAgentForStatistic(self, algorithm):
+    # aStarSearch
+    start_time = time.time()
+    start_memory_usage = psutil.Process().memory_info().rss / 1024.0 / 1024.0
+    
+    agent = SearchAgent("depthFirstSearch", "MineSweeperProblem")
+    if algorithm == "A*":
+      agent = SearchAgent("aStarSearch", "MineSweeperProblem", "MineSweeperHeuristic")
+    elif algorithm == "BrFs":
+      #change into Breath First Search when it defined
+      agent = SearchAgent("depthFirstSearch", "MineSweeperProblem")
+    agent.registerInitialState(self)
+
+    end_time = time.time()
+    end_memory_usage = psutil.Process().memory_info().rss / 1024.0 / 1024.0
+    self.time_used.set(round(end_time - start_time, 3))
+    self.memory_used.set(round(end_memory_usage - start_memory_usage, 3))
+    self.exploredAction = len(agent.getExploredAction())
+
+    
 
 # pathfinding_thread = None
 # display_thread = None
@@ -243,6 +276,7 @@ class SudokuGame():
         
         self.set_grid_gui_from_values(self.grid_boxes_values)
         self.total_sleep_time = 0
+        self.exploredAction = 0
 
     def load_algorithms(self):
         algorithms_names = ["A*", "DFS", "BrFS"]
@@ -450,6 +484,27 @@ class SudokuGame():
         self.update_single_grid_gui_square(actions[i].row, actions[i].col, "Red", 0)
         time.sleep(0.1)
 
+    def runAgentForStatistic(self, algorithm):
+      # aStarSearch
+      start_time = time.time()
+      start_memory_usage = psutil.Process().memory_info().rss / 1024.0 / 1024.0
+      agent = None
+
+      if algorithm == "A*":
+        agent = SearchAgent("aStarSearch", "SudokuProblem", "SudokuHeuristic", useSmallestBf=True)
+      elif algorithm == "DFS": 
+        agent = SearchAgent("depthFirstSearch", "SudokuProblem", useSmallestBf=True)
+      else: agent = SearchAgent("depthFirstSearch", "SudokuProblem", useSmallestBf=True)
+      
+      agent.registerInitialState(self)
+
+      end_time = time.time()
+      end_memory_usage = psutil.Process().memory_info().rss / 1024.0 / 1024.0
+      self.time_used.set(round(end_time - start_time, 3))
+      self.memory_used.set(round(end_memory_usage - start_memory_usage, 3))
+      self.exploredAction = len(agent.getExploredAction())
+
+      # return agent.getAction()
 
     def runAgent(self):
       # First disable button
@@ -523,41 +578,6 @@ class SudokuGridBox(tk.Entry):
 
 
 if __name__ == '__main__':
-  ################## MINESWEEPER #############################
-  # rows = 10
-  # cols = 10
-  # num_mines = 12
-  # ## Init with board
-  # board = [
-  #       [0,0,0,0,0,1,1,1,0,0,],
-  #       [0,0,0,0,0,1,-1,1,0,0,],
-  #       [0,0,1,2,2,2,1,1,0,0,],
-  #       [0,1,2,-1,-1,1,0,0,0,0,],
-  #       [0,1,-1,4,3,2,0,0,1,1,],
-  #       [1,2,2,2,-1,1,0,0,1,-1,],
-  #       [1,-1,1,2,2,2,0,0,1,1,],
-  #       [1,1,2,2,-1,1,1,1,1,0,],
-  #       [1,1,1,-1,2,1,2,-1,2,0,],
-  #       [-1,1,1,1,1,0,2,-1,2,0,],
-  # ]
-  # game = MineSweeperGame(rows, cols, num_mines, board)
-  # game.run_game()
-
-  # Init with random board
-  # game = MineSweeperGame(rows, cols, num_mines)
-
-  ################## SUDOKU #############################
-  ## Init with board
-  # board = [[9, 8, 0, 0, 0, 0, 0, 2, 0], [0, 2, 0, 0, 0, 0, 3, 9, 7], [0, 3, 1, 0, 0, 9, 5, 0, 8], [0, 0, 0, 4, 7, 5, 0, 1, 0], [0, 0, 0, 0, 1, 2, 0, 8, 0], [4, 1, 0, 0, 3, 0, 0, 5, 0], [3, 7, 0, 1, 0, 0, 0, 0, 2], [0, 0, 0, 0, 8, 0, 1, 7, 0], [0, 6, 8, 0, 5, 0, 0, 0, 0]]
-  # window = tk.Tk()
-  # SudokuGame(window, 9, board)
-  # window.mainloop()
-
-  # Init with random board
-  # window = tk.Tk()
-  # SudokuGame(window, 9)
-  # window.mainloop()
-
   parser = argparse.ArgumentParser(description='Run different games.')
   parser.add_argument('--game', choices=['minesweeper', 'sudoku'], default='minesweeper', help='Specify the game to run')
   parser.add_argument('--mode', choices=['default', 'random'], default='default', help='Specify the mode game')
