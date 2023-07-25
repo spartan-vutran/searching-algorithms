@@ -46,6 +46,7 @@ def depthFirstSearch(problem: Optional[SearchProblem]) -> Optional[SearchResult]
     node = popped_element[0]
     path_till_node = popped_element[1]
     if problem.isGoalState(node):  # Exit on encountering goal node
+      explored_actions.append(path_till_node)
       break
     else:
       if node not in visited_nodes:   # Skipping already visited nodes
