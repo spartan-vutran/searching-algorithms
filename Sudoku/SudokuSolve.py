@@ -96,7 +96,7 @@ def solve(board, gui=None):
         gui.toggle_buttons(True)
     return solved_board
 
-
+# class Action:
 
 
 def dfs_solve(board, gui):

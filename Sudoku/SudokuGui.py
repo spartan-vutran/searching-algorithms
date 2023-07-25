@@ -6,7 +6,12 @@ import copy
 import time
 import psutil
 
-# cpu_var = tk.StringVar()
+class SudokuAction():
+  def __init__(self, row, col, num):
+    self.row = row
+    self.col = col
+    self.num =num
+
 
 def print_sudoku_grid(grid):
     print("\n")
@@ -138,6 +143,7 @@ class MainApplication():
         
 
         self.buttons = [solve_board_button, check_solution_button, new_board_button, reset_board_button]
+        self.buttons = [solve_board_button, new_board_button, reset_board_button]
 
     def create_grid_gui(self):
         """Creates the GUI squares for the sudoku board"""
@@ -218,6 +224,7 @@ class MainApplication():
         self.set_grid_gui_from_values(self.grid_boxes_values)
         self.reset_grid_colour()
 
+
     def update_single_grid_gui_square(self, row, col, colour, value=None):
         """Updates the colour and value of a single square in the grid GUI"""
         self.grid_boxes_gui[row][col].config(fg=colour)
@@ -237,6 +244,53 @@ class MainApplication():
         for button in self.buttons:
             button.config(state=tk.NORMAL if clickable else tk.DISABLED)
 
+
+    def runNewAction(self, actions):
+      for action in actions:
+        self.update_single_grid_gui_square(action.row, action.col, "Green", action.num) 
+        time.sleep(0.2)
+
+
+    def runRemovedAction(self, actions):
+      for action in actions:
+        self.update_single_grid_gui_square(action.row, action.col, "Red")
+        time.sleep(0.1)
+        self.update_single_grid_gui_square(action.row, action.col, "Red", 0)
+        time.sleep(0.1)
+
+
+    def runAgent(self):
+      # aStarSearch
+      # agent = SearchAgent("depthFirstSearch", "MineSweeperProblem")
+      # agent = SearchAgent("aStarSearch", "MineSweeperProblem", "MineSweeperHeuristic")
+      # agent.registerInitialState(self)
+      # TODO: Run your agent here
+      explored_paths = [[SudokuAction(0,1,2), SudokuAction(0,2,5)], [SudokuAction(0,1,2), SudokuAction(0,3,6)]]
+      old_action = []
+      for path in explored_paths:
+        if not old_action:  
+          old_action = path
+          self.runNewAction(path)
+          continue
+        
+        # Find removed and added actions
+        i = 0
+        while old_action[i] == path[i]:
+          i +=1
+        remove_actions=old_action[i:]
+        add_actions=path[i:]
+
+        # Display on GUI
+        self.runRemovedAction(remove_actions)
+        self.runNewAction(add_actions)
+
+        old_action = path
+
+      self.toggle_buttons(True)
+            
+        # print(f"Action{count}: {action.row}, {action.col}, {action.num}")
+        # count +=1
+        # self.reveal_cell(action.x, action.y)
 
 class SudokuGridBox(tk.Entry):
     def __init__(self, master=None, **kwargs):
