@@ -1,7 +1,13 @@
 import copy
 from bitarray import bitarray
-
+from typing import Tuple
+import math
 class Action:
+  def __init__(self, x,y):
+    pass
+
+
+class MineAction(Action):
   def __init__(self, x,y):
     self.x = x
     self.y = y
@@ -9,6 +15,22 @@ class Action:
      return self.x
   def getY(self):
      return self.y
+  
+
+class SudokuAction(Action):
+  def __init__(self, row, col, num):
+    self.row = row
+    self.col = col
+    self.num =num
+
+  def __eq__(self, other):
+    if isinstance(other, SudokuAction):
+      return self.row == other.row and self.col == other.col and self.num == other.num
+    return False
+
+  # def __hash__(self):
+  #   # Ensure that instances of MyClass are hashable based on their value attribute
+  #   return hash(self.board.tobytes())
 
 
 class SearchProblem:
@@ -25,6 +47,7 @@ class SearchProblem:
         """
         pass
         # util.raiseNotDefined()
+    
 
     def isGoalState(self, state):
         """
@@ -57,8 +80,137 @@ class SearchProblem:
         return 1
         # util.raiseNotDefined()
 
+
+class SudokuProblem(SearchProblem):
+  """
+  This class outlines the structure of a search problem, but doesn't implement
+  any of the methods (in object-oriented terminology: an abstract class).
+
+  You do not need to change anything in this class, ever.
+  """
+  def __init__(self, gameState, useSmallestBf = False):
+    # We create the 2D array tuple as we need it to be hastable to store in visited_set
+    self.start_state = tuple(tuple(row) for row in gameState.grid_boxes_values)
+    self.size = gameState.size
+    self.useSmallestBf = useSmallestBf
+
+
+  def get_valid_numbers(self, board, row, col):
+    """Returns a set of possible numbers that could be inserted in a grid cell"""
+    return self.get_valid_numbers_in_row(board, row, col) & self.get_valid_in_column(board, row, col) & self.get_valid_in_square(board, row, col)
+
+
+  def get_valid_numbers_in_row(self, board, row, col):
+      """Returns a set of numbers valid in box given the sudoku row constraints"""
+      valid_numbers = set(range(1, self.size+1))
+      for index, item in enumerate(board[row]):
+          if index == col:
+            continue
+          elif item in valid_numbers:
+            valid_numbers.remove(item)
+      return valid_numbers
+
+
+  def get_valid_in_column(self, board, row, col):
+      """Returns a set of numbers valid in the column given sudoku constraints"""
+      valid_numbers = set(range(1, self.size+1))
+      for row_index in range(self.size):
+          if row_index == row:
+              continue
+          square = board[row_index][col]
+          if square in valid_numbers:
+              valid_numbers.remove(square)
+      return valid_numbers
+
+
+  def get_valid_in_square(self, board, row, col):
+      """Returns a set of numbers valid in the square given sudoku constraints"""
+      valid_numbers = set(range(1, self.size+1))
+      space_pos = int(math.sqrt(self.size))
+      start_x = (col // space_pos) * space_pos
+      start_y = (row // space_pos) * space_pos
+      for y in range(start_y, start_y + space_pos):
+          for x in range(start_x, start_x + space_pos):
+              square_value = board[y][x]
+              if y == row and x == col:
+                  continue
+              elif square_value in valid_numbers:
+                  valid_numbers.remove(square_value)
+      return valid_numbers
+
+
+  def getStartState(self):
+      """
+      Returns the start state for the search problem.
+      """
+      return [self.start_state, []]
+
+
+  def isGoalState(self, state: Tuple[Tuple[int]]):
+    """
+      state: Search state
+
+    Returns True if and only if the state is a valid goal state.
+    """
+    for row in range(self.size):
+        for col in range(self.size):
+            if state[row][col] not in self.get_valid_numbers(state, row, col):
+                return False
+    return True
+
+  def copyStateWithNewNumber(self, state: Tuple[Tuple[int]], row:int, col:int, num:int) -> Tuple[Tuple[int]]:
+    temp_array = list(state[row]) #Copy the row where we need change and turn it to list
+    temp_array[col] = num
+    new_state = ()
+    for i in range(len(state)):
+      if i == row:
+        new_state += (tuple(temp_array),)
+      else:
+         new_state +=(state[i], )
+    return new_state
+
+
+  def getSuccessors(self, state: Tuple[Tuple[int]]):
+      """
+        state: Search state
+
+      For a given state, this should return a list of triples, (successor,
+      action, stepCost), where 'successor' is a successor to the current
+      state, 'action' is the action required to get there, and 'stepCost' is
+      the incremental cost of expanding to that successor.
+      """
+      # We have 2 ways to generate successor:
+        # 1.  Choose first unfilled cell and then fill in the valid number
+        # 2.  Generate all successors from all cells which may have a set of valid number => This results in greater BFS
+
+      tripples = []
+      for i in range(len(state)):
+        for j in range(len(state[0])):
+            if state[i][j] == 0:
+              valid_numbers = self.get_valid_numbers(state, i, j)
+              if not valid_numbers:
+                return []
+              for num in valid_numbers:
+                successor = self.copyStateWithNewNumber(state, i, j, num)
+                tripples.append((successor, SudokuAction(i, j, num), 1))
+              if self.useSmallestBf:
+                return tripples
+      return tripples
+                
+
+  def getCostOfActions(self, actions):
+    """
+      actions: A list of actions to take
+
+    This method returns the total cost of a particular sequence of actions.
+    The sequence must be composed of legal moves.
+    """
+    return len(actions)
+      
+
+
 class MineSweeperState():
-  def __init__(self, gameState, isLose=False):
+  def __init__(self, gameState, isLose=False, useSmallestBf = False):
     # Touched tracking board
     self.cols = gameState.cols
     self.rows = gameState.rows
@@ -122,18 +274,19 @@ class MineSweeperProblem(SearchProblem):
       self.rows = gameState.rows
       # Init start state
       start_pos = 0
-      self.start_row = 0
-      self.start_col =0
-      while(self.board[self.start_row][self.start_col]==-1):
+      start_row = 0
+      start_col = 0
+      while(self.board[start_row][start_col]==-1):
         start_pos +=1
-        self.start_row = start_pos//self.cols 
-        self.start_col = start_pos%self.cols 
+        start_row = start_pos//self.cols 
+        start_col = start_pos%self.cols 
 
       # Create start_state
       self.start_state = MineSweeperState(gameState)
-      if self.board[self.start_row][self.start_col] == 0:
-        self.expand(self.start_state, self.start_row, self.start_col)
-      self.start_state[self.start_row, self.start_col] = 1
+      if self.board[start_row][start_col] == 0:
+        self.expand(self.start_state, start_row, start_col)
+      self.start_state[start_row, start_col] = 1
+      self.firstAction = MineAction(start_row, start_col)
 
       # Create goal state
       self.goal_state = MineSweeperState(gameState)
@@ -147,7 +300,7 @@ class MineSweeperProblem(SearchProblem):
         """
         Returns the start state for the search problem.
         """
-        return self.start_state
+        return [self.start_state, [self.firstAction]]
         # util.raiseNotDefined()
 
     def isGoalState(self, state: MineSweeperState):
@@ -201,7 +354,7 @@ class MineSweeperProblem(SearchProblem):
               elif self.board[i][j] == 0:
                 self.expand(successor, i, j)
               successor[i, j] = 1
-              successors.append((successor, Action(i,j), 1))
+              successors.append((successor, MineAction(i,j), 1))
       return successors
 
     def getCostOfActions(self, actions):

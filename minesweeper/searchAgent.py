@@ -35,7 +35,8 @@ class SearchAgent(Agent):
       breadthFirstSearch or bfs
   """
 
-  def __init__(self, fn='depthFirstSearch', prob='SimpleProblem', heuristic='nullHeuristic'):
+  def __init__(self, fn='depthFirstSearch', prob='SimpleProblem', heuristic='nullHeuristic', useSmallestBf = False):
+    self.useSmallestBf=useSmallestBf
     if fn not in dir(search):
       raise (AttributeError, fn + ' is not a search function in search.py.')
     func = getattr(search, fn)
@@ -71,13 +72,13 @@ class SearchAgent(Agent):
     if self.searchFunction == None:
       raise (Exception, "No search function provided for SearchAgent")
     starttime = time.time()
-    problem = self.searchType(state) # Makes a new search problem, make sure state is your specific game state (Minesweeper or Sudoku)
-    self.actions = self.searchFunction(problem) #Find a path
-    totalCost = problem.getCostOfActions(self.actions)
+    problem = self.searchType(state, self.useSmallestBf) # Makes a new search problem, make sure state is your specific game state (Minesweeper or Sudoku)
+    self.searchResult = self.searchFunction(problem) #Find a path
+    totalCost = problem.getCostOfActions(self.searchResult.actions)
     print('Path found with total cost of %d in %.1f seconds' % (totalCost, time.time() - starttime))
     # if '_expanded' in dir(problem): print('Search nodes expanded: %d' % problem._expanded)
 
-  def getAction(self, state):
+  def getAction(self):
     """
     Returns the next action in the path chosen earlier (in
     registerInitialState). 
@@ -85,7 +86,7 @@ class SearchAgent(Agent):
     state: a GameState object (minesweeper.py)
     """
     # TODO: We have to define action first
-    return self.actions
+    return self.searchResult.actions
     # if 'actionIndex' not in dir(self): self.actionIndex = 0
     # i = self.actionIndex
     # self.actionIndex += 1
@@ -93,3 +94,6 @@ class SearchAgent(Agent):
     #     yield self.actions[i]
     # else:
     #     return Directions.STOP
+
+  def getExploredAction(self):
+    return self.searchResult.explored_actions
