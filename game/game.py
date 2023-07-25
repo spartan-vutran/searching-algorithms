@@ -556,3 +556,4 @@ if __name__ == '__main__':
   # window = tk.Tk()
   # SudokuGame(window, 9)
   # window.mainloop()
+  pass
