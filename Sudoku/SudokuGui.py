@@ -2,10 +2,10 @@ import tkinter as tk
 import threading
 from SudokuSolve import *
 import copy
+import time
+import psutil
 
-
-
-
+# cpu_var = tk.StringVar()
 
 def print_sudoku_grid(grid):
     print("\n")
@@ -28,6 +28,12 @@ class MainApplication():
         self.grid_boxes_gui = []
         self.buttons = []
         self.feedback_label = None
+        
+        self.memory_used = tk.StringVar()
+        self.memory_used.set("")
+        
+        self.time_used = tk.StringVar()
+        self.time_used.set("")
         self.setup_gui()
         self.grid_boxes_values = [[1, 0, 0, 0, 7, 0, 3, 0, 0],
                                   [0, 8, 0, 0, 2, 0, 7, 0, 0],
@@ -38,12 +44,12 @@ class MainApplication():
                                   [7, 0, 0, 3, 5, 0, 0, 0, 9],
                                   [0, 0, 9, 0,4 ,0 ,0 ,5 ,0],
                                   [0, 0, 4, 0, 1, 0, 0, 0, 2]]
-        
-        
+
         print_sudoku_grid(self.grid_boxes_values) # in ra man hinh ma tran
         
         self.set_grid_gui_from_values(self.grid_boxes_values)
         self.total_sleep_time = 0
+        
 
     def setup_gui(self):
         """Creates buttons and labels used in the GUI"""
@@ -66,6 +72,25 @@ class MainApplication():
         new_board_button = tk.Button(self.window, text="New Board", command=self.new_board, font=('Ubuntu', 12))
         check_solution_button = tk.Button(self.window, text="Check Solution", command=self.check_solution, font=('Ubuntu', 12))
         solve_board_button = tk.Button(self.window, text="Solve Board", command=self.solve_board, font=('Ubuntu', 12))
+
+        status_frame = tk.Frame(self.window, bd=1, relief=tk.SUNKEN,)
+        status_frame_1 = tk.Frame(status_frame, bd=1, relief=tk.GROOVE)
+        tk.Label(status_frame_1, text="Execution time(s): ").grid(row=0, column=0, sticky='WENS', padx=2)
+        tk.Label(status_frame_1, textvariable= self.time_used).grid(row=0, column=1, sticky='W')
+        status_frame_1.grid_columnconfigure(1, weight=1)
+        status_frame_1.grid(row=0, column=1, sticky='WENS')
+
+        mem_status_frame_1 = tk.Frame(status_frame, bd=1, relief=tk.GROOVE)
+        tk.Label(mem_status_frame_1, text="Memory used (Mb): ").grid(row=0, column=0, sticky='WENS', padx=2)
+        tk.Label(mem_status_frame_1, textvariable= self.memory_used).grid(row=0, column=1, sticky='W')
+        mem_status_frame_1.grid_columnconfigure(1, weight=1)
+        mem_status_frame_1.grid(row=0, column=3, sticky='WENS')
+
+         # Place status_frame inside the window
+        status_frame.grid(row=12, column=0, columnspan=8, sticky='WENS')
+        status_frame.columnconfigure(1, weight=1, uniform=1)
+
+
         new_board_button.grid(column=1, row=11, columnspan=2)
         check_solution_button.grid(column=3, row=11, columnspan=2)
         reset_board_button.grid(column=5, row=11, columnspan=2)
@@ -119,15 +144,29 @@ class MainApplication():
         else:
             self.feedback_label.config(text="Incorrect solution", fg="Red")
 
+    def handle_solved_board(self, time_used, memory_used):
+    # Access the time and memory information from the global variables in solver.py
+        print("Execution time:", time_used, "seconds")
+        print(" Memory Usage:", memory_used, "Mb")
+        self.time_used.set(round(time_used, 3))
+        self.memory_used.set(round(memory_used, 3))
+
     def solve_board(self):
         """Solves the current board and updates the gui to display the solution"""
         self.toggle_buttons(False)
         self.set_grid_gui_from_values()
         board = copy.deepcopy(self.grid_boxes_values)
-        solve_thread = threading.Thread(target=solve, args=(board, self), daemon=True)
-        solve_thread.start()
+        # solve_thread = threading.Thread(target=solve, args=(board, self), daemon=True)
+        # solve_thread = threading.Thread(target=solveProblem, args=(board, self, self.handle_solved_board), daemon=True)
+        # solve_thread.start()
+
+        # notify_event.wait()
+        # solve_thread.join()
+        solve_thread = solve_async(board, self, callback= self.handle_solved_board)
         
-      
+
+        # print(f"Time taken: {result_data.get('memory_used', 0):.4f} seconds")
+        # print(f"Memory used: {result_data.get('time_used'):.2f} megabytes")
 
     def new_board(self):
         """Generates a new list of values to fill the grid squares and sets the GUI to this new list"""

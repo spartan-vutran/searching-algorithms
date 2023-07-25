@@ -1,7 +1,72 @@
 from random import choice, randint
 import time
+import psutil
+import threading
 
 total_sleep_time = 0
+DFS_time_solve = 0
+memory_used = 0
+
+# def solve(board, gui=None):
+#     """Solves the board and displays board to GUI/renables buttons if gui is not none.
+#     Returns solved board as nested list """
+    
+#     # tính toán thời gian chạy DFS
+    
+#     global total_sleep_time
+#     start_time = time.time()
+    
+#     solved_board = dfs_solve(board, gui)
+    
+#     end_time = time.time()
+#     DFS_time_solve = end_time - start_time - total_sleep_time
+#     if gui!=None:
+#         print(f"The time to solve the sudoku matrix with DFS is: {DFS_time_solve:.6f} seconds")
+#     total_sleep_time = 0
+    
+    
+#     if gui:
+#         gui.toggle_buttons(True)
+#     return solved_board
+
+
+def solve_async(board, gui=None, callback=None):
+    # Create a thread and start the solving process
+    solve_thread = threading.Thread(target=solveProblem, args=(board, gui, callback, "DFS"))
+    solve_thread.start()
+
+    # Return the thread, so the caller can choose to join or continue without blocking
+    return solve_thread
+
+def solveProblem(board, gui=None, callback=None, algorithm = "DFS"):
+    """Solves the board and displays board to GUI/renables buttons if gui is not none.
+    Returns solved board as nested list """
+    
+    # tính toán thời gian chạy DFS
+    
+    global total_sleep_time, memory_used, DFS_time_solve
+    start_time = time.time()
+    start_memory_usage = psutil.Process().memory_info().rss / 1024.0 / 1024.0
+    
+    solved_board = dfs_solve(board, gui)
+    
+    end_time = time.time()
+    end_memory_usage = psutil.Process().memory_info().rss / 1024.0 / 1024.0
+
+    DFS_time_solve = end_time - start_time - total_sleep_time
+    memory_used = end_memory_usage - start_memory_usage;
+    if gui!=None:
+        print(f"The time to solve the sudoku matrix with DFS is: {DFS_time_solve:.6f} seconds")
+        print(f"The time to sleep the sudoku matrix with DFS is: {total_sleep_time:.6f} seconds")
+        print(f"The memory used to solve the sudoku matrix with DFS is: {memory_used:.2f} megabytes")
+    # total_sleep_time = 0
+    
+    
+    if gui:
+        gui.toggle_buttons(True)
+    if callback is not None:
+        callback(DFS_time_solve, memory_used)
+
 
 def solve(board, gui=None):
     """Solves the board and displays board to GUI/renables buttons if gui is not none.
@@ -9,22 +74,27 @@ def solve(board, gui=None):
     
     # tính toán thời gian chạy DFS
     
-    global total_sleep_time
+    global total_sleep_time, memory_used, DFS_time_solve
     start_time = time.time()
+    start_memory_usage = psutil.Process().memory_info().rss / 1024.0 / 1024.0
     
     solved_board = dfs_solve(board, gui)
     
     end_time = time.time()
+    end_memory_usage = psutil.Process().memory_info().rss / 1024.0 / 1024.0
+
     DFS_time_solve = end_time - start_time - total_sleep_time
+    memory_used = end_memory_usage - start_memory_usage;
     if gui!=None:
         print(f"The time to solve the sudoku matrix with DFS is: {DFS_time_solve:.6f} seconds")
-    total_sleep_time = 0
+        print(f"The time to sleep the sudoku matrix with DFS is: {total_sleep_time:.6f} seconds")
+        print(f"The memory used to solve the sudoku matrix with DFS is: {memory_used:.2f} megabytes")
+    # total_sleep_time = 0
     
     
     if gui:
         gui.toggle_buttons(True)
     return solved_board
-
 
 
 
@@ -60,7 +130,6 @@ def dfs_solve(board, gui):
         time.sleep(0.1)
         total_sleep_time+=0.2
     return board
-
 
 def get_valid_numbers(board, row, col):
     """Returns a set of possible numbers that could be inserted in a grid cell"""
