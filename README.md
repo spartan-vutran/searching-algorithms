@@ -8,10 +8,10 @@ cd game
 ```
 In game file you do
 1. Minesweeper game
-- Uncomment the minesweeper code area in main function at the endmost of file and then run `python game.py`
+- Play with default board run `python game.py --game minesweeper --mode default`
+- Play with random board run `python game.py --game minesweeper --mode random`
 2. Sudoku game
-- Uncomment the Sudoku code area in main function at the endmost of file and then run `python game.py`
+- Play with default board run `python game.py --game sudoku --mode default`
+- Play with random board run `python game.py --game sudoku --mode random`
 
-## 2. Todo list
-- [x] UI for evaluate algorithms
-- [x] Implement backend 
+

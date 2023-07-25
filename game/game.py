@@ -9,6 +9,7 @@ from random import choice, randint
 import time
 import math
 import psutil
+import argparse
 
 
 time_used = 0
@@ -556,3 +557,40 @@ if __name__ == '__main__':
   # window = tk.Tk()
   # SudokuGame(window, 9)
   # window.mainloop()
+
+  parser = argparse.ArgumentParser(description='Run different games.')
+  parser.add_argument('--game', choices=['minesweeper', 'sudoku'], default='minesweeper', help='Specify the game to run')
+  parser.add_argument('--mode', choices=['default', 'random'], default='default', help='Specify the mode game')
+  args = parser.parse_args()
+
+  if args.game == 'minesweeper':
+    rows = 10
+    cols = 10
+    num_mines = 12
+    ## Init with board
+    board = [
+          [0,0,0,0,0,1,1,1,0,0,],
+          [0,0,0,0,0,1,-1,1,0,0,],
+          [0,0,1,2,2,2,1,1,0,0,],
+          [0,1,2,-1,-1,1,0,0,0,0,],
+          [0,1,-1,4,3,2,0,0,1,1,],
+          [1,2,2,2,-1,1,0,0,1,-1,],
+          [1,-1,1,2,2,2,0,0,1,1,],
+          [1,1,2,2,-1,1,1,1,1,0,],
+          [1,1,1,-1,2,1,2,-1,2,0,],
+          [-1,1,1,1,1,0,2,-1,2,0,],
+    ]
+    if args.mode == 'default':
+      game = MineSweeperGame(rows, cols, num_mines, board)
+    else: 
+      game = MineSweeperGame(rows, cols, num_mines)
+    game.run_game()
+  elif args.game == 'sudoku':
+    window = tk.Tk()
+    if args.mode == 'default':
+      board = [[9, 8, 0, 0, 0, 0, 0, 2, 0], [0, 2, 0, 0, 0, 0, 3, 9, 7], [0, 3, 1, 0, 0, 9, 5, 0, 8], [0, 0, 0, 4, 7, 5, 0, 1, 0], [0, 0, 0, 0, 1, 2, 0, 8, 0], [4, 1, 0, 0, 3, 0, 0, 5, 0], [3, 7, 0, 1, 0, 0, 0, 0, 2], [0, 0, 0, 0, 8, 0, 1, 7, 0], [0, 6, 8, 0, 5, 0, 0, 0, 0]]
+      SudokuGame(window, 9, board)
+    else: 
+      SudokuGame(window, 9)
+    window.mainloop()
+pass
