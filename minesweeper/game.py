@@ -249,6 +249,7 @@ class SudokuGame():
         reset_board_button.grid(column=int(self.size*0.5), row=self.size+2, columnspan=2 if self.size > 4 else 1)
         solve_board_button.grid(column=int(self.size*0.75), row=self.size+2, columnspan=2 if self.size > 4 else 1)
         # self.buttons = [solve_board_button, check_solution_button, new_board_button, reset_board_button]
+        self.buttons = [solve_board_button, new_board_button, reset_board_button]
 
     def create_grid_gui(self):
         """Creates the GUI squares for the sudoku board"""
@@ -302,11 +303,10 @@ class SudokuGame():
         """Solves the current board and updates the gui to display the solution"""
         self.toggle_buttons(False)
         self.set_grid_gui_from_values()
-        board = copy.deepcopy(self.grid_boxes_values)
-        # solve_thread = threading.Thread(target=solve, args=(board, self), daemon=True)
         solve_thread = threading.Thread(target=self.runAgent, daemon=True)
         solve_thread.start()
-        
+
+
     def generate_new_sudoku_board(self):
       """Randomly generates a seed for a board, then solves the board and randomly removes numbers"""
       new_board = [[0] * self.size for i in range(self.size)]
@@ -378,7 +378,7 @@ class SudokuGame():
 
 
     def runAgent(self):
-      # aStarSearch
+      # First disable button
       agent = SearchAgent("depthFirstSearch", "SudokuProblem", useSmallestBf=True)
       # agent = SearchAgent("aStarSearch", "MineSweeperProblem", "MineSweeperHeuristic")
       agent.registerInitialState(self)
