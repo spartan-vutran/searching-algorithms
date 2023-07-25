@@ -143,7 +143,7 @@ class MainApplication():
         
 
         self.buttons = [solve_board_button, check_solution_button, new_board_button, reset_board_button]
-        self.buttons = [solve_board_button, new_board_button, reset_board_button]
+        # self.buttons = [solve_board_button, new_board_button, reset_board_button]
 
     def create_grid_gui(self):
         """Creates the GUI squares for the sudoku board"""
