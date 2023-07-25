@@ -81,6 +81,7 @@ class SearchProblem:
         # util.raiseNotDefined()
 
 
+
 class SudokuProblem(SearchProblem):
   """
   This class outlines the structure of a search problem, but doesn't implement
@@ -149,7 +150,17 @@ class SudokuProblem(SearchProblem):
   def isGoalState(self, state: Tuple[Tuple[int]]):
     """
       state: Search state
-
+    [
+        [6,8,7,5,2,3,4,0,0,],
+        [0,0,5,7,0,1,3,9,0,],
+        [0,0,1,0,0,8,0,0,0,],
+        [0,0,0,0,7,0,0,1,3,],
+        [0,0,3,0,1,0,0,4,9,],
+        [5,0,0,0,4,0,8,7,0,],
+        [0,5,0,0,0,0,9,8,0,],
+        [4,0,8,0,6,0,0,0,2,],
+        [0,3,0,2,8,0,0,0,4,],
+    ]
     Returns True if and only if the state is a valid goal state.
     """
     for row in range(self.size):
@@ -258,7 +269,7 @@ class MineSweeperProblem(SearchProblem):
 
     Note: this search problem is fully specified; you should NOT change it.
     """
-    def __init__(self, gameState):
+    def __init__(self, gameState, useSmallestBf=False):
       """
       Stores the start and goal. 
       gameState: A MineSweeperGame object (minesweeper.py)
@@ -365,7 +376,23 @@ class MineSweeperProblem(SearchProblem):
         The sequence must be composed of legal moves.
         """
         return len(actions)
-    
+
+
+def SudokuHeuristic(state, problem: SudokuProblem):
+  left_cell= 0
+  invalid_point = 0
+  total_cell = problem.size**2
+  for i in range(problem.size):
+     for j in range(problem.size):
+        if state[i][j] == 0:
+          valid_fill_nums = problem.get_valid_numbers(state, i, j)
+          if not valid_fill_nums:
+            invalid_point +=2 #This is because we lost at least 2 steps to fix the wrong action
+          else:
+            left_cell +=1
+
+  return left_cell + invalid_point - ((total_cell - left_cell)/total_cell if left_cell != 0 else 0)
+
 
 # Calculate the number of cells aside bomb cells
 def MineSweeperHeuristic(state: MineSweeperState, problem: MineSweeperProblem):
@@ -384,6 +411,7 @@ def MineSweeperHeuristic(state: MineSweeperState, problem: MineSweeperProblem):
             if state[m, k] == 0 and problem.board[m][k] != -1: 
               cell_aside_bomb_count.add((m,k))
 
-  
-  return len(cell_aside_bomb_count) - problem.goal_state.board.count(False)/state.board.count(False)
+  x = problem.goal_state.board.count(False)
+  y = state.board.count(False)
+  return len(cell_aside_bomb_count) - (x/y if x<y else 0)
      

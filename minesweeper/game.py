@@ -124,6 +124,7 @@ class MineSweeperGame:
 
 
   def runAgent(self):
+    # agent = SearchAgent("depthFirstSearch", "MineSweeperProblem")
     agent = SearchAgent("aStarSearch", "MineSweeperProblem", "MineSweeperHeuristic")
     agent.registerInitialState(self)
 
@@ -320,6 +321,7 @@ class SudokuGame():
       # Fill action
       # TODO: Open this comment and remove the below line if you have implemented SudokuSearch
       agent = SearchAgent("depthFirstSearch", "SudokuProblem", useSmallestBf=True)
+      # agent = SearchAgent("aStarSearch", "SudokuProblem", "SudokuHeuristic", useSmallestBf=True)
       self.grid_boxes_values = new_board #First change the board before send into the agent
       agent.registerInitialState(self)
       actions = agent.getAction()
@@ -370,17 +372,17 @@ class SudokuGame():
 
 
     def runRemovedAction(self, actions):
-      for action in actions:
-        self.update_single_grid_gui_square(action.row, action.col, "Red")
+      for i in range(len(actions) - 1, -1, -1):
+        self.update_single_grid_gui_square(actions[i].row, actions[i].col, "Red")
         time.sleep(0.1)
-        self.update_single_grid_gui_square(action.row, action.col, "Red", 0)
+        self.update_single_grid_gui_square(actions[i].row, actions[i].col, "Red", 0)
         time.sleep(0.1)
 
 
     def runAgent(self):
       # First disable button
-      agent = SearchAgent("depthFirstSearch", "SudokuProblem", useSmallestBf=True)
-      # agent = SearchAgent("aStarSearch", "MineSweeperProblem", "MineSweeperHeuristic")
+      # agent = SearchAgent("depthFirstSearch", "SudokuProblem", useSmallestBf=True)
+      agent = SearchAgent("aStarSearch", "SudokuProblem", "SudokuHeuristic", useSmallestBf=True)
       agent.registerInitialState(self)
       # TODO: Run your agent here
       explored_paths = agent.getExploredAction()
@@ -460,20 +462,13 @@ if __name__ == '__main__':
   #       [1,1,1,-1,2,1,2,-1,2,0,],
   #       [-1,1,1,1,1,0,2,-1,2,0,],
   # ]
-  # game = MineSweeperGame(rows, cols, num_mines)
+  # # game = MineSweeperGame(rows, cols, num_mines)
   # game = MineSweeperGame(rows, cols, num_mines, board)
   # game.run_game()
-  board = [
-        [0,0,0,0,0,0,0,0,0,],
-        [0,0,0,0,0,0,0,0,0,],
-        [0,0,0,0,0,0,0,0,0,],
-        [6,7,9,3,1,2,4,8,5,],
-        [0,0,0,0,0,0,0,0,0,],
-        [0,0,0,0,0,0,0,0,0,],
-        [0,0,0,0,0,0,0,0,0,],
-        [0,0,0,0,0,0,0,0,0,],
-        [0,0,0,0,0,0,0,0,0,],
-  ]
+  # board = [[9, 8, 0, 0, 0, 0, 0, 2, 0], [0, 2, 0, 0, 0, 0, 3, 9, 7], [0, 3, 1, 0, 0, 9, 5, 0, 8], [0, 0, 0, 4, 7, 5, 0, 1, 0], [0, 0, 0, 0, 1, 2, 0, 8, 0], [4, 1, 0, 0, 3, 0, 0, 5, 0], [3, 7, 0, 1, 0, 0, 0, 0, 2], [0, 0, 0, 0, 8, 0, 1, 7, 0], [0, 6, 8, 0, 5, 0, 0, 0, 0]]
   window = tk.Tk()
-  SudokuGame(window, 9, board)
+  SudokuGame(window, 9)
   window.mainloop()
+
+
+  # x = [[9, 8, 0, 0, 0, 0, 0, 2, 0], [0, 2, 0, 0, 0, 0, 3, 9, 7], [0, 3, 1, 0, 0, 9, 5, 0, 8], [0, 0, 0, 4, 7, 5, 0, 1, 0], [0, 0, 0, 0, 1, 2, 0, 8, 0], [4, 1, 0, 0, 3, 0, 0, 5, 0], [3, 7, 0, 1, 0, 0, 0, 0, 2], [0, 0, 0, 0, 8, 0, 1, 7, 0], [0, 6, 8, 0, 5, 0, 0, 0, 0]]

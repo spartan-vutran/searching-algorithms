@@ -71,7 +71,7 @@ def depthFirstSearch(problem: Optional[SearchProblem]) -> Optional[SearchResult]
             printArrayInt(child_node)
             print("\n")
             printArrayInt(node)
-          child_path = successor[1]
+          child_path = successor[1] 
           full_path = path_till_node + [child_path]  # Computing path of child node from start node
           fringe.push((child_node, full_path)) # Pushing ('Child Node',[Full Path]) to the fringe
 
@@ -91,10 +91,7 @@ def aStarSearch(problem, heuristic=nullHeuristic) -> Optional[SearchResult]:
     path_till_node = popped_element[1]
     cost_till_node = popped_element[2]
     if problem.isGoalState(node):    # Exit on encountering goal node
-      print("==========Goal node=============")
-      printArray(node, problem)
-      print("\n")
-      printArrayInt(problem.board)
+      explored_actions.append(path_till_node)
       break
     else:
       if node not in visited_nodes:    # Skipping already visited nodes
@@ -107,6 +104,7 @@ def aStarSearch(problem, heuristic=nullHeuristic) -> Optional[SearchResult]:
           printArrayInt(problem.board)
         else:
           printArrayInt(node)
+          print(f"Cost F: {cost_till_node}")
         explored_actions.append(path_till_node)
         for successor in successors:
           child_node = successor[0]
@@ -117,19 +115,19 @@ def aStarSearch(problem, heuristic=nullHeuristic) -> Optional[SearchResult]:
           heuristic_cost = heuristic(child_node, problem)
           print("==========Its successor=============")
           if isinstance(node, MineSweeperState):
-            printArray(node, problem)
+            printArray(child_node, problem)
             print("\n")
             printArrayInt(problem.board)
           else:
+            printArrayInt(child_node)
+            print("\n")
             printArrayInt(node)
           print(f"Cost F: {full_cost + heuristic_cost}.  G(s)={full_cost}. H(s)={heuristic_cost} ")
           # TODO: Find a more efficient search, because update function would make the code to be O(n^2)
+          if heuristic_cost == 0:
+            explored_actions.append(full_path)
+            return SearchResult(explored_actions, full_path) #It means this is a goal state
           fringe.update((child_node, full_path, full_cost), full_cost + heuristic_cost)    # Pushing (Node, [Path], Culmulative backward cost) to the fringe.
-      else:
-        print("==========Explored node=============")
-        printArray(node, problem)
-        print("\n")
-        printArrayInt(problem.board)
   return SearchResult(explored_actions, path_till_node)
 
 dfs = depthFirstSearch
