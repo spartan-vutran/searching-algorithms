@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 import threading
 from SudokuSolve import *
 import copy
@@ -34,7 +35,13 @@ class MainApplication():
         
         self.time_used = tk.StringVar()
         self.time_used.set("")
+
+        self.algorithm_name = tk.StringVar()
+        self.algorithm_name.set("")
+
+        self.algorithm_combobox = None
         self.setup_gui()
+        self.load_algorithms()
         self.grid_boxes_values = [[1, 0, 0, 0, 7, 0, 3, 0, 0],
                                   [0, 8, 0, 0, 2, 0, 7, 0, 0],
                                   [3, 0, 0, 0, 8, 9, 0, 0, 4],
@@ -50,6 +57,20 @@ class MainApplication():
         self.set_grid_gui_from_values(self.grid_boxes_values)
         self.total_sleep_time = 0
         
+    def load_algorithms(self):
+        algorithms_names = ["A*", "DFS", "BrFS"]
+
+        prev_algorithm_name = self.algorithm_name.get()
+        # Update algorithms combobox with loaded algorithm's names
+        self.algorithm_combobox['values'] = algorithms_names
+        # If there is any loaded algorithms
+        if len(algorithms_names):
+            if algorithms_names.count(prev_algorithm_name):
+                # Select the previously selected algorithm
+                self.algorithm_combobox.set(prev_algorithm_name)
+            else:
+                # Select the first algorithm from combobox
+                self.algorithm_combobox.set(algorithms_names[0])
 
     def setup_gui(self):
         """Creates buttons and labels used in the GUI"""
@@ -61,7 +82,8 @@ class MainApplication():
         self.feedback_label.grid(column=3, row=12, columnspan=2)
 
     def set_dimensions(self):
-        self.window.geometry('690x550')
+        # self.window.geometry('690x550')
+        self.window.geometry('900x600')
         self.window.columnconfigure(0, minsize=20)
         self.window.rowconfigure(0, minsize=20)
         self.window.rowconfigure(10, minsize=20)
@@ -87,7 +109,7 @@ class MainApplication():
         mem_status_frame_1.grid(row=0, column=3, sticky='WENS')
 
          # Place status_frame inside the window
-        status_frame.grid(row=12, column=0, columnspan=8, sticky='WENS')
+        status_frame.grid(row=13, column=0, columnspan=8, sticky='WENS')
         status_frame.columnconfigure(1, weight=1, uniform=1)
 
 
@@ -95,6 +117,26 @@ class MainApplication():
         check_solution_button.grid(column=3, row=11, columnspan=2)
         reset_board_button.grid(column=5, row=11, columnspan=2)
         solve_board_button.grid(column=7, row=11, columnspan=2)
+
+        # Algorithm frame
+        # algorithm_frame = tk.Frame(self.window)
+        algorithm_frame = tk.Frame(status_frame)
+        algorithm_frame.grid(row=15, column=1, sticky='EWN', padx=5, pady=5)
+        algorithm_frame.grid_rowconfigure(15, weight=1)
+        algorithm_frame.grid_columnconfigure(1, weight=1)
+        # Algorithm label
+        algorithm_combobox_label = tk.Label(algorithm_frame, text="algorithm: ")
+        algorithm_combobox_label.grid(row=15, column=0)
+        # Algorithm combobox
+        # algorithm_name = tk.StringVar()
+        self.algorithm_combobox = ttk.Combobox(algorithm_frame,
+                                        textvariable=self.algorithm_name,
+                                        validate=tk.ALL,
+                                        validatecommand=lambda: False)
+        self.algorithm_combobox.grid(row=15, column= 3, sticky='EWN')
+
+        
+
         self.buttons = [solve_board_button, check_solution_button, new_board_button, reset_board_button]
 
     def create_grid_gui(self):
