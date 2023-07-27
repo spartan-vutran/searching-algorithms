@@ -11,7 +11,6 @@ import math
 import psutil
 import argparse
 
-
 time_used = 0
 memory_used = 0
 
@@ -40,11 +39,14 @@ class MineSweeperGame:
 
     #statistic
     self.exploredAction = 0
-    self.memory_used = tk.StringVar()
-    self.memory_used.set("")
+    # self.memory_used = tk.StringVar()
+    # self.memory_used.set("")
+    self.memory_used = None
+    # self.memory_used.set("")
     
-    self.time_used = tk.StringVar()
-    self.time_used.set("")
+    # self.time_used = tk.StringVar()
+    # self.time_used.set("")
+    self.time_used = None
 
   def clear(self):
     self.time_used.set("")
@@ -277,6 +279,22 @@ class SudokuGame():
         self.set_grid_gui_from_values(self.grid_boxes_values)
         self.total_sleep_time = 0
         self.exploredAction = 0
+
+    def load_algorithms(self):
+        algorithms_names = ["A*", "DFS", "BrFS"]
+
+        prev_algorithm_name = self.algorithm_name.get()
+        # Update algorithms combobox with loaded algorithm's names
+        self.algorithm_combobox['values'] = algorithms_names
+        # If there is any loaded algorithms
+        if len(algorithms_names):
+            if algorithms_names.count(prev_algorithm_name):
+                # Select the previously selected algorithm
+                self.algorithm_combobox.set(prev_algorithm_name)
+            else:
+                # Select the first algorithm from combobox
+                self.algorithm_combobox.set(algorithms_names[0])
+
 
     def load_algorithms(self):
         algorithms_names = ["A*", "DFS", "BrFS"]
@@ -574,8 +592,6 @@ class SudokuGridBox(tk.Entry):
             self.old_value = self.get()
         else:
             self.set(self.old_value)
-
-
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Run different games.')
