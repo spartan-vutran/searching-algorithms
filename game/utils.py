@@ -1,6 +1,8 @@
 
 from PIL import Image, ImageTk
 import heapq
+import threading
+import ctypes
 
 def resize_icon_image(image_path, width, height):
     # Open the image using PIL
@@ -13,6 +15,27 @@ def resize_icon_image(image_path, width, height):
 
 def nullHeuristic(state, problem=None):
   return 0
+
+class thread_with_exception(threading.Thread):
+    def __init__(self, name, target, args):
+      threading.Thread.__init__(self, target=target, args = args)
+      self.name = name
+          
+    def get_id(self):
+        if hasattr(self, '_thread_id'):
+            return self._thread_id
+        for id, thread in threading._active.items():
+            if thread is self:
+                return id
+  
+    def raise_exception(self):
+        thread_id = self.get_id()
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id,
+              ctypes.py_object(SystemExit))
+        if res > 1:
+            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
+            print('Exception raise failure')
+
 
 
 class Stack:

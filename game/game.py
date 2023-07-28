@@ -3,7 +3,6 @@ from tkinter import ttk
 import random
 import utils
 from searchAgent import SearchAgent
-import copy
 import threading
 from random import choice, randint
 import time
@@ -11,7 +10,7 @@ import math
 import psutil
 import csv
 import argparse
-
+from utils import thread_with_exception
 time_used = 0
 memory_used = 0
 
@@ -54,39 +53,96 @@ class MineSweeperGame:
     self.memory_used.set("")
     self.exploredAction = 0
 
-  def export(self):
+
+  def execute_search(self, id, searchAlgo, result, event: threading.Event):
+    heur = "nullHeuristic"
+    if searchAlgo ==  "aStarSearch":
+      heur = "MineSweeperHeuristic"
+    start_time = time.time()
+    agent = SearchAgent(searchAlgo, "MineSweeperProblem", heur)
+    agent.registerInitialState(self)
+    end_time = time.time()
+    time_exe = end_time - start_time
+    explored_state = len(agent.getExploredAction())
+    result.append(time_exe)
+    result.append(explored_state)
+
+    # Set event to inform the thread is done
+    event.set()
+
+  def export(self, samples=1, timeout=10):
     time_stamp = int(time.time())
-    file_name = f"minesweeper_{self.rows}x{self.cols}_{self.num_mines}_{time_stamp}.csv"
-    # agent = SearchAgent("depthFirstSearch", "")
-    
-    data = [
-        ("STT", "Algorithm", "Board", "Size", "Num_mines","Memory usage", "Time execution", "Explored nodes"),
-    ]
-    # DFS first
-    
-    for algo in ("depthFirstSearch",):
+
+    for size in range(4,11):
+      self.rows = size
+      self.cols = size
+      self.num_mines = int(size*0.3)
+      file_name = f"minesweeper_s{size}_m{self.num_mines}_{time_stamp}.csv"
+      
+      data = [
+        ("Board_key", "Board", "Algorithm", "Time execution", "Explored nodes"),
+      ]
+
       for i in range(0,samples):
-        initial_memory = psutil.Process().memory_info().rss
-        start_time = time.time()
-        heur = "nullHeuristic"
-        if algo == "aStarSearch":
-          heur = "SudokuHeuristic"
-        agent = SearchAgent(algo, "SudokuProblem", heur, useSmallestBf=True)
-        agent.registerInitialState(self)
-        final_memory  = psutil.Process().memory_info().rss
-        end_time = time.time()
-        memory_usage_mb = (final_memory - initial_memory) / 1024 / 1024
-        time_exe = end_time - start_time
-        explored_state = len(agent.getExploredAction())
-        data.append((i+1, algo, self.grid_boxes_values, memory_usage_mb, time_exe, explored_state))
+        self.board = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
+        self.initBoard()
+        for algo in ("depthFirstSearch", "aStarSearch"):
+          event = threading.Event()
+          start_time = time.time()
+          result = []
+          thread = thread_with_exception('Thread 1', target=self.execute_search, args = (i, algo, result, event))
+          thread.start()
+          while not event.is_set():
+            thread.join(timeout=1)
+            if time.time() - start_time > timeout:
+              event.set()
+              thread.raise_exception()
+              thread.join()
+          if len(result) != 2:
+            data.append((i+1, self.board, algo, "TIMEOUT", "TIMEOUT"))
+          else:
+            data.append((i+1, self.board, algo, result[0], result[1]))
+
 
         # Generate new board
-        self.new_board()
-    with open(f"./export/{file_name}", mode="w", newline='') as fd:
-      writer = csv.writer(fd)
-      writer.writerows(data)
-    print("Data has been written to", file_name) 
-    pass
+      with open(f"./export/{file_name}", mode="w", newline='') as fd:
+        writer = csv.writer(fd)
+        writer.writerows(data)
+      print(f"Data for size {size} has been written to {file_name}") 
+
+  # def export(self):
+  #   time_stamp = int(time.time())
+  #   file_name = f"minesweeper_{self.rows}x{self.cols}_{self.num_mines}_{time_stamp}.csv"
+  #   # agent = SearchAgent("depthFirstSearch", "")
+    
+  #   data = [
+  #       ("STT", "Algorithm", "Board", "Size", "Num_mines","Memory usage", "Time execution", "Explored nodes"),
+  #   ]
+  #   # DFS first
+    
+  #   for algo in ("depthFirstSearch",):
+  #     for i in range(0,samples):
+  #       initial_memory = psutil.Process().memory_info().rss
+  #       start_time = time.time()
+  #       heur = "nullHeuristic"
+  #       if algo == "aStarSearch":
+  #         heur = "SudokuHeuristic"
+  #       agent = SearchAgent(algo, "SudokuProblem", heur, useSmallestBf=True)
+  #       agent.registerInitialState(self)
+  #       final_memory  = psutil.Process().memory_info().rss
+  #       end_time = time.time()
+  #       memory_usage_mb = (final_memory - initial_memory) / 1024 / 1024
+  #       time_exe = end_time - start_time
+  #       explored_state = len(agent.getExploredAction())
+  #       data.append((i+1, algo, self.grid_boxes_values, memory_usage_mb, time_exe, explored_state))
+
+  #       # Generate new board
+  #       self.new_board()
+  #   with open(f"./export/{file_name}", mode="w", newline='') as fd:
+  #     writer = csv.writer(fd)
+  #     writer.writerows(data)
+  #   print("Data has been written to", file_name) 
+  #   pass
 
   def initBoard(self):
     mines = random.sample(range(self.rows * self.cols), self.num_mines)
@@ -301,7 +357,24 @@ class SudokuGame():
         self.total_sleep_time = 0
         self.exploredAction = 0
 
-    def export(self, samples=1):
+    def execute_search(self, id, searchAlgo, result, event: threading.Event):
+      heur = "nullHeuristic"
+      if searchAlgo ==  "aStarSearch":
+        heur = "SudokuHeuristic"
+      start_time = time.time()
+      agent = SearchAgent(searchAlgo, "SudokuProblem", heur, useSmallestBf=True)
+      agent.registerInitialState(self)
+      end_time = time.time()
+      time_exe = end_time - start_time
+      explored_state = len(agent.getExploredAction())
+      result.append(time_exe)
+      result.append(explored_state)
+
+      # Set event to inform the thread is done
+      event.set()
+
+
+    def export(self, samples=1, timeout=10):
       time_stamp = int(time.time())
 
       for size in [4,9]:
@@ -309,26 +382,29 @@ class SudokuGame():
         file_name = f"sudoku_{size}_{time_stamp}.csv"
         
         data = [
-          ("Board_key", "Board", "Algorithm", "Memory usage", "Time execution", "Explored nodes"),
+          ("Board_key", "Board", "Algorithm", "Time execution", "Explored nodes"),
         ]
 
         for i in range(0,samples):
           self.create_grid_gui() #TODO: Trashcode here
           self.new_board()
           for algo in ("depthFirstSearch", "aStarSearch"):
-            heur = "nullHeuristic"
-            if algo ==  "aStarSearch":
-              heur = "SudokuHeuristic"
-            initial_memory = psutil.Process().memory_info().rss
+            event = threading.Event()
             start_time = time.time()
-            agent = SearchAgent(algo, "SudokuProblem", heur, useSmallestBf=True)
-            agent.registerInitialState(self)
-            final_memory  = psutil.Process().memory_info().rss
-            end_time = time.time()
-            memory_usage_kb = (final_memory - initial_memory) / 1024
-            time_exe = end_time - start_time
-            explored_state = len(agent.getExploredAction())
-            data.append((i+1, self.grid_boxes_values, algo, memory_usage_kb, time_exe, explored_state))
+            result = []
+            thread = thread_with_exception('Thread 1', target=self.execute_search, args = (i, algo, result, event))
+            thread.start()
+            while not event.is_set():
+              thread.join(timeout=1)
+              if time.time() - start_time > timeout:
+                event.set()
+                thread.raise_exception()
+                thread.join()
+            if len(result) != 2:
+              data.append((i+1, self.grid_boxes_values, algo, "TIMEOUT", "TIMEOUT"))
+            else:
+              data.append((i+1, self.grid_boxes_values, algo, result[0], result[1]))
+
 
           # Generate new board
         with open(f"./export/{file_name}", mode="w", newline='') as fd:
@@ -663,6 +739,8 @@ if __name__ == '__main__':
   parser.add_argument("-r", '--rows', type=int, default=10, help='Row size of minesweeper board')
   parser.add_argument("-c", '--cols', type=int, default=10, help='Column size of minesweeper board')
   parser.add_argument("-m", '--mine', type=int, default=12, help='Number of mines in minesweeper board')
+  parser.add_argument('--sample-size', type=int, default=30, help='Size of board to measure and export to the csv file')
+  parser.add_argument("-t", '--timeout', type=int, default=100, help='Timeout during exporting csv file')
   args = parser.parse_args()
 
   if args.game == 'minesweeper':
@@ -683,8 +761,11 @@ if __name__ == '__main__':
       if args.mode == 'default':
         game = MineSweeperGame(board = board)
       else: 
-        game = MineSweeperGame(args.row, args.cols, args.mine)
+        game = MineSweeperGame(args.rows, args.cols, args.mine)
       game.run_game()
+    else:
+      game = MineSweeperGame(args.rows, args.cols, args.mine)
+      game.export(args.sample_size, args.timeout)
 
        
   elif args.game == 'sudoku':
@@ -697,4 +778,4 @@ if __name__ == '__main__':
       game.run_game() 
     else:
       game=SudokuGame(size=args.size)
-      game.export()
+      game.export(args.sample_size, args.timeout)
