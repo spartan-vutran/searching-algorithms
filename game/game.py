@@ -76,7 +76,7 @@ class MineSweeperGame:
     for size in range(4,11):
       self.rows = size
       self.cols = size
-      self.num_mines = int(size*0.3)
+      self.num_mines = int(size*size*0.4)
       file_name = f"minesweeper_s{size}_m{self.num_mines}_{time_stamp}.csv"
       
       data = [
