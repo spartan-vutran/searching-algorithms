@@ -1,0 +1,3 @@
+Board_key,Board,Algorithm,Memory usage,Time execution,Explored nodes
+1,"[[0, 0, 0, 4], [0, 0, 2, 0], [2, 0, 4, 0], [4, 3, 1, 0]]",depthFirstSearch,0.0,0.10692334175109863,13
+1,"[[0, 0, 0, 4], [0, 0, 2, 0], [2, 0, 4, 0], [4, 3, 1, 0]]",aStarSearch,0.0,0.15100717544555664,10

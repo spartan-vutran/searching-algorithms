@@ -9,6 +9,7 @@ from random import choice, randint
 import time
 import math
 import psutil
+import csv
 import argparse
 
 time_used = 0
@@ -16,7 +17,7 @@ memory_used = 0
 
 
 class MineSweeperGame:
-  def __init__(self, rows, cols, num_mines, board = None):
+  def __init__(self, rows = 10, cols = 10, num_mines = 12, board = None):
     if board == None:
       self.rows = rows
       self.cols = cols
@@ -52,6 +53,40 @@ class MineSweeperGame:
     self.time_used.set("")
     self.memory_used.set("")
     self.exploredAction = 0
+
+  def export(self):
+    time_stamp = int(time.time())
+    file_name = f"minesweeper_{self.rows}x{self.cols}_{self.num_mines}_{time_stamp}.csv"
+    # agent = SearchAgent("depthFirstSearch", "")
+    
+    data = [
+        ("STT", "Algorithm", "Board", "Size", "Num_mines","Memory usage", "Time execution", "Explored nodes"),
+    ]
+    # DFS first
+    
+    for algo in ("depthFirstSearch",):
+      for i in range(0,samples):
+        initial_memory = psutil.Process().memory_info().rss
+        start_time = time.time()
+        heur = "nullHeuristic"
+        if algo == "aStarSearch":
+          heur = "SudokuHeuristic"
+        agent = SearchAgent(algo, "SudokuProblem", heur, useSmallestBf=True)
+        agent.registerInitialState(self)
+        final_memory  = psutil.Process().memory_info().rss
+        end_time = time.time()
+        memory_usage_mb = (final_memory - initial_memory) / 1024 / 1024
+        time_exe = end_time - start_time
+        explored_state = len(agent.getExploredAction())
+        data.append((i+1, algo, self.grid_boxes_values, memory_usage_mb, time_exe, explored_state))
+
+        # Generate new board
+        self.new_board()
+    with open(f"./export/{file_name}", mode="w", newline='') as fd:
+      writer = csv.writer(fd)
+      writer.writerows(data)
+    print("Data has been written to", file_name) 
+    pass
 
   def initBoard(self):
     mines = random.sample(range(self.rows * self.cols), self.num_mines)
@@ -234,9 +269,11 @@ def print_sudoku_grid(grid):
         print()
     print("\n")
 
+
+
 class SudokuGame():
-    def __init__(self, window, size, board = None):
-        self.window = window
+    def __init__(self, size = 9, board = None):
+        self.window = tk.Tk()
         self.grid_boxes_gui = []
         self.buttons = []
         self.feedback_label = None
@@ -250,35 +287,58 @@ class SudokuGame():
         #custom for new UI
         self.memory_used = tk.StringVar()
         self.memory_used.set("")
-        
         self.time_used = tk.StringVar()
         self.time_used.set("")
-
         self.algorithm_name = tk.StringVar()
         self.algorithm_name.set("")
-
         self.algorithm_combobox = None
-        ##
         self.setup_gui()
         self.load_algorithms()
-        # self.grid_boxes_values = [[1, 0, 0, 0, 7, 0, 3, 0, 0],
-        #                           [0, 8, 0, 0, 2, 0, 7, 0, 0],
-        #                           [3, 0, 0, 0, 8, 9, 0, 0, 4],
-        #                           [8, 4, 0, 0, 0, 1, 9, 0, 3],
-        #                           [0, 0, 3, 7, 0, 8, 5, 0, 0],
-        #                           [9, 0, 1, 2, 0, 0, 0, 7, 8],
-        #                           [7, 0, 0, 3, 5, 0, 0, 0, 9],
-        #                           [0, 0, 9, 0,4 ,0 ,0 ,5 ,0],
-        #                           [0, 0, 4, 0, 1, 0, 0, 0, 2]]
 
-
-
-        
         print_sudoku_grid(self.grid_boxes_values) # in ra man hinh ma tran
         
         self.set_grid_gui_from_values(self.grid_boxes_values)
         self.total_sleep_time = 0
         self.exploredAction = 0
+
+    def export(self, samples=1):
+      time_stamp = int(time.time())
+
+      for size in [4,9]:
+        self.size = size
+        file_name = f"sudoku_{size}_{time_stamp}.csv"
+        
+        data = [
+          ("Board_key", "Board", "Algorithm", "Memory usage", "Time execution", "Explored nodes"),
+        ]
+
+        for i in range(0,samples):
+          self.create_grid_gui() #TODO: Trashcode here
+          self.new_board()
+          for algo in ("depthFirstSearch", "aStarSearch"):
+            heur = "nullHeuristic"
+            if algo ==  "aStarSearch":
+              heur = "SudokuHeuristic"
+            initial_memory = psutil.Process().memory_info().rss
+            start_time = time.time()
+            agent = SearchAgent(algo, "SudokuProblem", heur, useSmallestBf=True)
+            agent.registerInitialState(self)
+            final_memory  = psutil.Process().memory_info().rss
+            end_time = time.time()
+            memory_usage_kb = (final_memory - initial_memory) / 1024
+            time_exe = end_time - start_time
+            explored_state = len(agent.getExploredAction())
+            data.append((i+1, self.grid_boxes_values, algo, memory_usage_kb, time_exe, explored_state))
+
+          # Generate new board
+        with open(f"./export/{file_name}", mode="w", newline='') as fd:
+          writer = csv.writer(fd)
+          writer.writerows(data)
+        print(f"Data for size {size} has been written to {file_name}") 
+
+    def run_game(self):
+      self.window.mainloop()
+  
 
     def load_algorithms(self):
         algorithms_names = ["A*", "DFS", "BrFS"]
@@ -379,6 +439,7 @@ class SudokuGame():
     def create_grid_gui(self):
         """Creates the GUI squares for the sudoku board"""
         space_pos = int(math.sqrt(self.size))
+        self.grid_boxes_gui = []
         for row in range(self.size):
             self.grid_boxes_gui.append([])
             for col in range(self.size):
@@ -444,8 +505,8 @@ class SudokuGame():
 
       # Fill action
       # TODO: Open this comment and remove the below line if you have implemented SudokuSearch
-      agent = SearchAgent("depthFirstSearch", "SudokuProblem", useSmallestBf=True)
-      # agent = SearchAgent("aStarSearch", "SudokuProblem", "SudokuHeuristic", useSmallestBf=True)
+      # agent = SearchAgent("depthFirstSearch", "SudokuProblem", useSmallestBf=True)
+      agent = SearchAgent("aStarSearch", "SudokuProblem", "SudokuHeuristic", useSmallestBf=True)
       self.grid_boxes_values = new_board #First change the board before send into the agent
       agent.registerInitialState(self)
       actions = agent.getAction()
@@ -595,14 +656,16 @@ class SudokuGridBox(tk.Entry):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Run different games.')
-  parser.add_argument('--game', choices=['minesweeper', 'sudoku'], default='minesweeper', help='Specify the game to run')
+  parser.add_argument("-g", '--game', choices=['minesweeper', 'sudoku'], default='minesweeper', help='Specify the game to run')
   parser.add_argument('--mode', choices=['default', 'random'], default='default', help='Specify the mode game')
+  parser.add_argument("-e", '--export', action="store_true",  help='export to csv file')
+  parser.add_argument("-s", '--size', type=int, default=9, help='Size of sudoku board')
+  parser.add_argument("-r", '--rows', type=int, default=10, help='Row size of minesweeper board')
+  parser.add_argument("-c", '--cols', type=int, default=10, help='Column size of minesweeper board')
+  parser.add_argument("-m", '--mine', type=int, default=12, help='Number of mines in minesweeper board')
   args = parser.parse_args()
 
   if args.game == 'minesweeper':
-    rows = 10
-    cols = 10
-    num_mines = 12
     ## Init with board
     board = [
           [0,0,0,0,0,1,1,1,0,0,],
@@ -616,17 +679,22 @@ if __name__ == '__main__':
           [1,1,1,-1,2,1,2,-1,2,0,],
           [-1,1,1,1,1,0,2,-1,2,0,],
     ]
-    if args.mode == 'default':
-      game = MineSweeperGame(rows, cols, num_mines, board)
-    else: 
-      game = MineSweeperGame(rows, cols, num_mines)
-    game.run_game()
+    if not args.export:
+      if args.mode == 'default':
+        game = MineSweeperGame(board = board)
+      else: 
+        game = MineSweeperGame(args.row, args.cols, args.mine)
+      game.run_game()
+
+       
   elif args.game == 'sudoku':
-    window = tk.Tk()
-    if args.mode == 'default':
-      board = [[9, 8, 0, 0, 0, 0, 0, 2, 0], [0, 2, 0, 0, 0, 0, 3, 9, 7], [0, 3, 1, 0, 0, 9, 5, 0, 8], [0, 0, 0, 4, 7, 5, 0, 1, 0], [0, 0, 0, 0, 1, 2, 0, 8, 0], [4, 1, 0, 0, 3, 0, 0, 5, 0], [3, 7, 0, 1, 0, 0, 0, 0, 2], [0, 0, 0, 0, 8, 0, 1, 7, 0], [0, 6, 8, 0, 5, 0, 0, 0, 0]]
-      SudokuGame(window, 9, board)
-    else: 
-      SudokuGame(window, 9)
-    window.mainloop()
-pass
+    if not args.export:
+      if args.mode == 'default':
+        board = [[9, 8, 0, 0, 0, 0, 0, 2, 0], [0, 2, 0, 0, 0, 0, 3, 9, 7], [0, 3, 1, 0, 0, 9, 5, 0, 8], [0, 0, 0, 4, 7, 5, 0, 1, 0], [0, 0, 0, 0, 1, 2, 0, 8, 0], [4, 1, 0, 0, 3, 0, 0, 5, 0], [3, 7, 0, 1, 0, 0, 0, 0, 2], [0, 0, 0, 0, 8, 0, 1, 7, 0], [0, 6, 8, 0, 5, 0, 0, 0, 0]]
+        game=SudokuGame(board=board)
+      else:
+        game=SudokuGame(size=args.size)
+      game.run_game() 
+    else:
+      game=SudokuGame(size=args.size)
+      game.export()
