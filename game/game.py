@@ -54,7 +54,7 @@ class MineSweeperGame:
     self.exploredAction = 0
 
 
-  def execute_search(self, id, searchAlgo, result, event: threading.Event):
+  def execute_search(self, searchAlgo, result, event: threading.Event):
     heur = "nullHeuristic"
     if searchAlgo ==  "aStarSearch":
       heur = "MineSweeperHeuristic"
@@ -69,6 +69,53 @@ class MineSweeperGame:
 
     # Set event to inform the thread is done
     event.set()
+
+
+  def getMeasurementsOfAlgo(self, timeout):
+    data = []
+    for algo in ("depthFirstSearch", "aStarSearch"):
+      event = threading.Event()
+      start_time = time.time()
+      result = []
+      thread = thread_with_exception('Thread 1', target=self.execute_search, args = (algo, result, event))
+      thread.start()
+      while not event.is_set():
+        thread.join(timeout=1)
+        if time.time() - start_time > timeout:
+          event.set()
+          thread.raise_exception()
+          thread.join()
+      if len(result) != 2:
+        data.append((algo, "TIMEOUT", "TIMEOUT"))
+      else:
+        data.append((algo, result[0], result[1]))
+    return data
+
+
+  def exportWiThIncreasedMine(self, timeout=10, size = 7):
+    time_stamp = int(time.time())
+    self.rows = size
+    self.cols = size
+    data = [
+        ("Boardid", "Board" ,"Mine percentage", "Mine number", "Algorithm", "Time execution", "Explored nodes"),
+    ]
+    file_name = f"minesweeper_s{size}_{time_stamp}.csv"
+
+    for i in range(1, 10):
+      self.num_mines = int(size*size*(i*0.1))
+      self.board = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
+      self.initBoard()
+      measurements = self.getMeasurementsOfAlgo(timeout)
+      # Custom output to csv
+      for item in measurements:
+        algo, time_exec, explored_nodes = item
+        data.append((i, self.board, f"{i*10}%", self.num_mines, algo, time_exec, explored_nodes))
+
+    with open(f"./export/{file_name}", mode="w", newline='') as fd:
+      writer = csv.writer(fd)
+      writer.writerows(data)
+    print(f"Data for size {size} has been written to {file_name}") 
+
 
   def export(self, samples=1, timeout=10):
     time_stamp = int(time.time())
@@ -86,63 +133,15 @@ class MineSweeperGame:
       for i in range(0,samples):
         self.board = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
         self.initBoard()
-        for algo in ("depthFirstSearch", "aStarSearch"):
-          event = threading.Event()
-          start_time = time.time()
-          result = []
-          thread = thread_with_exception('Thread 1', target=self.execute_search, args = (i, algo, result, event))
-          thread.start()
-          while not event.is_set():
-            thread.join(timeout=1)
-            if time.time() - start_time > timeout:
-              event.set()
-              thread.raise_exception()
-              thread.join()
-          if len(result) != 2:
-            data.append((i+1, self.board, algo, "TIMEOUT", "TIMEOUT"))
-          else:
-            data.append((i+1, self.board, algo, result[0], result[1]))
-
-
-        # Generate new board
+        measurements = self.getMeasurementsOfAlgo(timeout)
+        for item in measurements:
+          algo, time_exec, explored_nodes = item
+          data.append((i, self.board, algo, time_exec, explored_nodes))
       with open(f"./export/{file_name}", mode="w", newline='') as fd:
         writer = csv.writer(fd)
         writer.writerows(data)
       print(f"Data for size {size} has been written to {file_name}") 
 
-  # def export(self):
-  #   time_stamp = int(time.time())
-  #   file_name = f"minesweeper_{self.rows}x{self.cols}_{self.num_mines}_{time_stamp}.csv"
-  #   # agent = SearchAgent("depthFirstSearch", "")
-    
-  #   data = [
-  #       ("STT", "Algorithm", "Board", "Size", "Num_mines","Memory usage", "Time execution", "Explored nodes"),
-  #   ]
-  #   # DFS first
-    
-  #   for algo in ("depthFirstSearch",):
-  #     for i in range(0,samples):
-  #       initial_memory = psutil.Process().memory_info().rss
-  #       start_time = time.time()
-  #       heur = "nullHeuristic"
-  #       if algo == "aStarSearch":
-  #         heur = "SudokuHeuristic"
-  #       agent = SearchAgent(algo, "SudokuProblem", heur, useSmallestBf=True)
-  #       agent.registerInitialState(self)
-  #       final_memory  = psutil.Process().memory_info().rss
-  #       end_time = time.time()
-  #       memory_usage_mb = (final_memory - initial_memory) / 1024 / 1024
-  #       time_exe = end_time - start_time
-  #       explored_state = len(agent.getExploredAction())
-  #       data.append((i+1, algo, self.grid_boxes_values, memory_usage_mb, time_exe, explored_state))
-
-  #       # Generate new board
-  #       self.new_board()
-  #   with open(f"./export/{file_name}", mode="w", newline='') as fd:
-  #     writer = csv.writer(fd)
-  #     writer.writerows(data)
-  #   print("Data has been written to", file_name) 
-  #   pass
 
   def initBoard(self):
     mines = random.sample(range(self.rows * self.cols), self.num_mines)
@@ -730,47 +729,44 @@ class SudokuGridBox(tk.Entry):
         else:
             self.set(self.old_value)
 
-if __name__ == '__main__':
+
+def main():
   parser = argparse.ArgumentParser(description='Run different games.')
   parser.add_argument("-g", '--game', choices=['minesweeper', 'sudoku'], default='minesweeper', help='Specify the game to run')
   parser.add_argument('--mode', choices=['default', 'random'], default='default', help='Specify the mode game')
   parser.add_argument("-e", '--export', action="store_true",  help='export to csv file')
   parser.add_argument("-s", '--size', type=int, default=9, help='Size of sudoku board')
-  parser.add_argument("-r", '--rows', type=int, default=10, help='Row size of minesweeper board')
-  parser.add_argument("-c", '--cols', type=int, default=10, help='Column size of minesweeper board')
-  parser.add_argument("-m", '--mine', type=int, default=12, help='Number of mines in minesweeper board')
+  parser.add_argument("-r", '--rows', type=int, default=7, help='Row size of minesweeper board')
+  parser.add_argument("-c", '--cols', type=int, default=7, help='Column size of minesweeper board')
+  parser.add_argument("-m", '--mine', type=int, default=8, help='Number of mines in minesweeper board')
   parser.add_argument('--sample-size', type=int, default=30, help='Size of board to measure and export to the csv file')
   parser.add_argument("-t", '--timeout', type=int, default=100, help='Timeout during exporting csv file')
+  parser.add_argument("-em", '--export-mine',  action="store_true", help='Export measures with gradually increasing mine')
   args = parser.parse_args()
-
+  ###################### MINESWEEPER ########################
   if args.game == 'minesweeper':
-    ## Init with board
-    board = [
-          [0,0,0,0,0,1,1,1,0,0,],
-          [0,0,0,0,0,1,-1,1,0,0,],
-          [0,0,1,2,2,2,1,1,0,0,],
-          [0,1,2,-1,-1,1,0,0,0,0,],
-          [0,1,-1,4,3,2,0,0,1,1,],
-          [1,2,2,2,-1,1,0,0,1,-1,],
-          [1,-1,1,2,2,2,0,0,1,1,],
-          [1,1,2,2,-1,1,1,1,1,0,],
-          [1,1,1,-1,2,1,2,-1,2,0,],
-          [-1,1,1,1,1,0,2,-1,2,0,],
-    ]
+    ## Init custom board
+    board = [[-1, -1, -1, 4, -1, -1, -1], [-1, -1, 7, -1, -1, -1, -1], [-1, -1, -1, -1, -1, -1, -1], [-1, -1, -1, 8, -1, -1, -1], [-1, -1, -1, -1, -1, -1, -1], [-1, 8, -1, -1, -1, -1, -1], [-1, -1, -1, -1, -1, -1, 3]]
+    if args.export:
+      game = MineSweeperGame(args.rows, args.cols, args.mine)
+      game.export(args.sample_size, args.timeout)
+      return
+    if args.export_mine:
+      game = MineSweeperGame(args.rows, args.cols, args.mine)
+      game.exportWiThIncreasedMine(args.timeout, args.rows)
+      return 
     if not args.export:
       if args.mode == 'default':
         game = MineSweeperGame(board = board)
       else: 
         game = MineSweeperGame(args.rows, args.cols, args.mine)
       game.run_game()
-    else:
-      game = MineSweeperGame(args.rows, args.cols, args.mine)
-      game.export(args.sample_size, args.timeout)
-
-       
+      
+  ###################### SUDOKU ########################  
   elif args.game == 'sudoku':
     if not args.export:
       if args.mode == 'default':
+        ## Init custom board
         board = [[9, 8, 0, 0, 0, 0, 0, 2, 0], [0, 2, 0, 0, 0, 0, 3, 9, 7], [0, 3, 1, 0, 0, 9, 5, 0, 8], [0, 0, 0, 4, 7, 5, 0, 1, 0], [0, 0, 0, 0, 1, 2, 0, 8, 0], [4, 1, 0, 0, 3, 0, 0, 5, 0], [3, 7, 0, 1, 0, 0, 0, 0, 2], [0, 0, 0, 0, 8, 0, 1, 7, 0], [0, 6, 8, 0, 5, 0, 0, 0, 0]]
         game=SudokuGame(board=board)
       else:
@@ -779,3 +775,6 @@ if __name__ == '__main__':
     else:
       game=SudokuGame(size=args.size)
       game.export(args.sample_size, args.timeout)
+
+if __name__ == '__main__':
+  main()
