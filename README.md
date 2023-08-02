@@ -14,6 +14,11 @@ In game file you do
 python game.py --game minesweeper --mode default
 ```
 
++ To view the result step by step. Let's run:
+```bash
+python minesweeperUI.py
+```
+
 + To play with random board in a specific row, column size and number of mines. Execute:
 
 ```bash
